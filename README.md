@@ -17,6 +17,12 @@ Site statique destiné à l'hébergement **Vercel**, avec authentification et do
 - Étape 3 : accueil des matières + intégration des contenus.
 - Publication : dépôt privé puis déploiement Vercel.
 
+## Documents
+
+- [`GUIDE_CONFIGURATION.md`](GUIDE_CONFIGURATION.md) — configuration pas à pas (Firebase, Vercel, Resend) côté utilisateur.
+- [`DECISIONS.md`](DECISIONS.md) — choix d'architecture (accès, essai gratuit strict, messagerie admin).
+- [`RAPPORT_ETAPE_1.md`](RAPPORT_ETAPE_1.md) — rapport du socle d'interface.
+
 ## Sécurité
 
 Aucun secret côté client, aucun gestionnaire d'événement en ligne, aucun `javascript:`. La vérification réelle des accès se fait côté serveur.
