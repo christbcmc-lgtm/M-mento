@@ -1,0 +1,16 @@
+# Dependances / build
+node_modules/
+.vercel/
+dist/
+.cache/
+
+# Environnement & secrets (ne jamais versionner)
+.env
+.env.*
+*.local
+serviceAccount*.json
+firebase-adminsdk*.json
+
+# Divers
+.DS_Store
+*.log

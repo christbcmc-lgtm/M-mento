@@ -1,0 +1,63 @@
+/* Mémento — styles communs. Toutes les couleurs viennent de themes.css (variables). */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--fond);color:var(--texte);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;transition:background .3s,color .3s;overflow-x:hidden}
+a{color:var(--accent)}
+
+/* En-tête + logo */
+header.app{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--bordure);position:sticky;top:0;z-index:5;transition:background .3s}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:.01em}
+.brand svg{width:36px;height:36px}
+.spacer{margin-left:auto}
+select.theme{background:var(--fond);color:var(--texte);border:1px solid var(--bordure);border-radius:10px;padding:8px 10px;font:600 14px system-ui}
+
+/* Ambiance — fondu de couleurs (blobs) */
+.hero{position:relative;padding:48px 20px 36px;text-align:center;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.28;background:var(--accent);animation:flotte 14s ease-in-out infinite alternate;pointer-events:none}
+.b1{width:260px;height:260px;left:-60px;top:-40px}
+.b2{width:200px;height:200px;right:-40px;bottom:-30px;animation-delay:-6s}
+@keyframes flotte{to{transform:translate(40px,30px) scale(1.15)}}
+.hero h1{position:relative;margin:0 0 8px;font-size:clamp(28px,7vw,44px);animation:monte .8s both}
+.hero p{position:relative;margin:0 auto 10px;max-width:560px;color:var(--texte-doux);animation:monte .8s .15s both}
+@keyframes monte{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* Conteneur / cartes */
+.wrap{max-width:760px;margin:0 auto;padding:0 18px 48px}
+.panel{background:var(--surface);border:1px solid var(--bordure);border-radius:18px;padding:22px;animation:monte .6s both}
+.panel+.panel{margin-top:18px}
+
+/* Onglets */
+.tabs{display:flex;gap:8px;margin:0 auto 18px;max-width:760px;padding:0 18px}
+.tab{flex:1;border:1px solid var(--bordure);background:var(--surface);color:var(--texte-doux);border-radius:12px;padding:12px;font:700 15px system-ui;cursor:pointer;transition:all .15s}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--sur-accent);border-color:var(--accent)}
+
+/* Formulaires */
+label{display:block;font-weight:600;margin:14px 0 6px;font-size:14px}
+input,textarea{width:100%;background:var(--fond);color:var(--texte);border:1px solid var(--bordure);border-radius:12px;padding:12px 14px;font:16px system-ui;transition:border-color .15s}
+input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{min-height:92px;resize:vertical}
+.aide{color:var(--texte-doux);font-size:13px;margin:6px 2px 0}
+
+/* Boutons */
+.btn{border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:var(--sur-accent);font:700 16px system-ui;cursor:pointer;transition:transform .15s,filter .15s;width:100%;margin-top:18px}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+
+/* Messages */
+.note{border-radius:12px;padding:12px 14px;background:var(--masque);color:var(--masque-texte);font-size:14px;margin-top:14px}
+.err{color:var(--erreur);font-size:14px;margin-top:10px;min-height:18px}
+
+/* Overlay succès */
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;background:color-mix(in srgb,var(--fond) 88%,transparent);z-index:20;text-align:center}
+.overlay.on{display:flex;animation:fondu .4s}
+@keyframes fondu{from{opacity:0}}
+.overlay .boite{background:var(--surface);border:1px solid var(--bordure);border-radius:20px;padding:30px 26px;max-width:420px}
+.overlay svg.ok{width:84px;height:84px}
+.overlay .ok circle,.overlay .ok path{fill:none;stroke:var(--succes);stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:200;stroke-dashoffset:200;animation:trace .8s .1s forwards}
+.overlay .ok path{animation-delay:.5s;animation-duration:.5s}
+@keyframes trace{to{stroke-dashoffset:0}}
+.cit{margin:14px 0 18px;font-style:italic;color:var(--texte-doux);opacity:0;animation:fondu2 1s 1s forwards}
+@keyframes fondu2{to{opacity:1}}
+
+footer.app{color:var(--texte-doux);text-align:center;font-size:13px;padding:22px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
