@@ -135,3 +135,82 @@ Le site doit envoyer des emails (lien d'activation, lien personnel, essai gratui
 - **À NE PAS mettre dans le chat** : la clé privée `.json`, `TOKEN_SECRET`, `RESEND_API_KEY`, ton email admin → **uniquement dans Vercel**.
 
 Dès que j'ai le **bloc 1**, je branche le code sur ton Firebase et je continue (liens personnels, codes par matière, messagerie, essai gratuit). Tu peux faire les étapes 1 à 6 tranquillement, dans l'ordre.
+
+---
+
+# Partie 2 — Mise en service du back-end (après le code de l'étape 2)
+
+Le code de l'espace membre, de l'administration, de l'essai gratuit et de toutes les API est maintenant écrit. Voici **les quelques manipulations de ton côté** pour le mettre en service. Fais-les dans l'ordre.
+
+## A. ⚠️ URGENT — Régénérer la clé serveur (sécurité)
+
+La clé serveur (`.json`) a été **partagée dans le chat** : elle est donc **compromise** et doit être **remplacée**. C'est rapide :
+
+1. Firebase → **roue dentée ⚙** → **Paramètres du projet** → onglet **Comptes de service** / *Service accounts*.
+2. Clique **« Générer une nouvelle clé privée »** → **Générer la clé**. Un **nouveau** fichier `.json` se télécharge.
+3. *(Recommandé)* Va sur **https://console.cloud.google.com** → même projet → **IAM et administration** → **Comptes de service** → ouvre le compte `firebase-adminsdk-…` → onglet **Clés** → **supprime l'ancienne clé** (celle partagée). Ça l'invalide définitivement.
+4. Reporte les **3 valeurs du NOUVEAU fichier** dans Vercel (voir étape 5, tableau) : `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`. Si elles y étaient déjà, **remplace** les valeurs.
+
+> 📌 Confirme simplement « nouvelle clé générée + ancienne supprimée ✅ ». Ne colle **jamais** le fichier dans le chat.
+
+## B. Créer TON compte administrateur (Firebase Authentication)
+
+La page d'administration (`/admin.html`) n'est accessible qu'au compte dont l'email est **exactement** celui de la variable `ADMIN_EMAIL`.
+
+1. Firebase → menu de gauche → **Authentication** → onglet **« Users » / Utilisateurs**.
+2. Clique **« Add user » / Ajouter un utilisateur**.
+3. **Email** : saisis **la même adresse** que celle mise dans `ADMIN_EMAIL` (Vercel). **Mot de passe** : choisis un mot de passe solide (c'est ce mot de passe que tu taperas sur `/admin.html`).
+4. Clique **Add user**. C'est fait : tu peux te connecter à l'administration avec cet email + ce mot de passe.
+
+> 📌 Ne me communique **pas** ce mot de passe. Confirme « compte admin créé ✅ ».
+
+## C. Déclarer les matières (base Firestore)
+
+Les matières affichées dans l'espace membre viennent de la collection **`matieres`**. Crée-les une fois :
+
+1. Firebase → **Firestore Database** → onglet **« Données » / Data**.
+2. Clique **« Démarrer une collection » / Start collection** → **ID de la collection** : `matieres` → **Suivant**.
+3. Crée un premier document — **ID du document** : `thermo` → ajoute 2 champs :
+   - `nom` (type *string*) = `Thermodynamique`
+   - `ordre` (type *number*) = `1`
+   - **Enregistrer**.
+4. Clique **« Ajouter un document »** et recommence :
+   - ID `probas-stats` → `nom` = `Probabilités & Statistiques`, `ordre` = `2`
+   - ID `info` → `nom` = `Informatique`, `ordre` = `3`
+
+> Les **ID de documents** (`thermo`, `probas-stats`, `info`) sont ceux que la console d'administration réutilise quand tu accordes un accès. Tu pourras en ajouter d'autres plus tard de la même façon.
+> 📌 Confirme « matières créées ✅ ».
+
+## D. Installer les règles de sécurité Firestore
+
+Le fichier `firestore.rules` (dans le code) **interdit tout accès direct** depuis le navigateur : seul le serveur (clé de l'étape A) peut lire/écrire. À appliquer une fois :
+
+1. Firebase → **Firestore Database** → onglet **« Règles » / Rules**.
+2. **Remplace** tout le contenu par celui du fichier `firestore.rules` du dépôt (copie-colle), puis clique **« Publier » / Publish**.
+
+> 📌 Confirme « règles publiées ✅ ».
+
+## E. Vérifier les variables Vercel
+
+Assure-toi que **toutes** ces variables existent dans Vercel (Projet → **Settings** → **Environment Variables**) :
+
+`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (nouvelle clé de l'étape A), `ADMIN_EMAIL` (= email du compte admin de l'étape B), `TOKEN_SECRET` (phrase longue aléatoire), `RESEND_API_KEY`, `SITE_URL` (= adresse exacte du site, ex. `https://mementohub-theta.vercel.app`).
+
+> Après toute modification de variable, fais un **Redeploy** (Deployments → … → Redeploy) pour qu'elle soit prise en compte.
+
+## F. Domaine autorisé (si pas déjà fait)
+
+Firebase → **Authentication** → **Settings** → **Authorized domains** → **Add domain** → ajoute l'adresse exacte du site (sans `https://`), ex. `mementohub-theta.vercel.app`. C'est nécessaire pour que la connexion admin fonctionne.
+
+## G. Essai en conditions réelles
+
+Une fois A→F faits et le site redéployé :
+
+1. Va sur `/admin.html`, connecte-toi avec ton compte admin.
+2. Depuis la section **« Accorder / activer un accès »**, saisis un email de test, coche une ou deux matières, puis **envoie la clé**. Tu dois recevoir l'email (via Resend).
+3. Ouvre l'email, va sur l'accueil, colle **nom + email + clé** : tu reçois alors un **lien personnel** menant à `/espace.html`.
+4. Depuis l'espace, teste la **messagerie** ; côté admin, **réponds** (avec une pièce jointe par lien si tu veux).
+5. Teste l'**invitation d'essai** : l'email reçu mène à `/essai.html` (aperçu minuté, lecture seule).
+
+> 📌 Dis-moi si une étape coince (message d'erreur précis) et je corrige.
+

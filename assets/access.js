@@ -38,9 +38,19 @@
       if (!nom) { err.textContent = 'Veuillez indiquer votre nom.'; return; }
       if (!validEmail(email)) { err.textContent = 'Adresse email invalide.'; return; }
       if (!validKey(k)) { err.textContent = 'Clé au format XXXXX-XXXXX-XXXXX-XXXXX.'; return; }
-      // Étape 2 : envoyer au backend pour vérification + génération du lien personnel.
-      $('cit').textContent = '« ' + CIT[Math.floor(Math.random()*CIT.length)] + ' »';
-      var ov = $('ov'); ov.classList.add('on');
+      var btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true; var libelle = btn.textContent; btn.textContent = 'Activation…';
+      fetch('/api/activer', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom: nom, email: email, cle: k })
+      }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
+        .then(function(res){
+          btn.disabled = false; btn.textContent = libelle;
+          if (!res.ok || !res.j.ok) { err.textContent = (res.j && res.j.erreur) || 'Activation impossible.'; return; }
+          $('cit').textContent = '« ' + CIT[Math.floor(Math.random()*CIT.length)] + ' »';
+          $('ov').classList.add('on');
+        })
+        .catch(function(){ btn.disabled = false; btn.textContent = libelle; err.textContent = 'Réseau indisponible, réessayez.'; });
     });
 
     var ok = $('ov-ok');
