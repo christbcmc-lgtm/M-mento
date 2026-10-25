@@ -1,0 +1,89 @@
+{
+  "matiere": "thermo",
+  "evaluations": [
+    {
+      "id": "q1",
+      "titre": "Évaluation 1 — Notions fondamentales & 1er principe",
+      "chapitre": "Chapitres I à III",
+      "questions": [
+        {
+          "id": "q1a",
+          "enonce": "Une transformation au cours de laquelle la température du système reste constante est dite :",
+          "options": ["isochore", "isobare", "isotherme", "adiabatique"],
+          "bonne": 2,
+          "explication": "Isotherme = à température constante (iso-therme). Isochore = volume constant, isobare = pression constante, adiabatique = sans échange de chaleur."
+        },
+        {
+          "id": "q1b",
+          "enonce": "Le premier principe de la thermodynamique s'écrit, pour un système fermé :",
+          "options": ["\u0394U = W + Q", "\u0394U = W − Q", "\u0394U = Q − W seulement si W>0", "\u0394U = 0 toujours"],
+          "bonne": 0,
+          "explication": "La variation d'énergie interne égale la somme du travail et de la chaleur reçus : \u0394U = W + Q (convention des échanges reçus comptés positivement)."
+        },
+        {
+          "id": "q1c",
+          "enonce": "L'énergie interne U est une fonction d'état. Cela signifie que :",
+          "options": ["sa variation dépend du chemin suivi", "sa variation ne dépend que des états initial et final", "elle est toujours nulle", "elle ne dépend que de la pression"],
+          "bonne": 1,
+          "explication": "Une fonction d'état ne dépend que de l'état du système : sa variation est indépendante du chemin, contrairement à W et Q."
+        },
+        {
+          "id": "q1d",
+          "enonce": "Pour une transformation adiabatique :",
+          "options": ["Q = 0", "W = 0", "\u0394U = 0", "\u0394T = 0"],
+          "bonne": 0,
+          "explication": "Adiabatique = aucun échange de chaleur avec l'extérieur, donc Q = 0 et \u0394U = W."
+        },
+        {
+          "id": "q1e",
+          "enonce": "L'enthalpie H est définie par :",
+          "options": ["H = U − PV", "H = U + PV", "H = U + TS", "H = PV − U"],
+          "bonne": 1,
+          "explication": "H = U + PV. À pression constante, \u0394H = Qp (chaleur échangée à pression constante)."
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "titre": "Évaluation 2 — Deuxième principe, entropie & machines",
+      "chapitre": "Chapitre IV",
+      "questions": [
+        {
+          "id": "q2a",
+          "enonce": "Pour une transformation réversible, la variation d'entropie s'écrit :",
+          "options": ["dS = \u03b4Q / T", "dS = \u03b4W / T", "dS = T · \u03b4Q", "dS = \u03b4Q · T"],
+          "bonne": 0,
+          "explication": "Pour une transformation réversible, dS = \u03b4Q_rev / T. Pour une transformation irréversible, dS > \u03b4Q / T."
+        },
+        {
+          "id": "q2b",
+          "enonce": "Le deuxième principe affirme que, pour un système isolé, l'entropie :",
+          "options": ["ne peut que diminuer", "reste constante", "ne peut que croître ou rester constante", "est toujours nulle"],
+          "bonne": 2,
+          "explication": "Pour un système isolé, \u0394S ≥ 0 : l'entropie croît (irréversible) ou reste constante (réversible), jamais ne diminue."
+        },
+        {
+          "id": "q2c",
+          "enonce": "Le rendement d'un moteur thermique de Carnot fonctionnant entre une source chaude T\u2081 et une source froide T\u2082 vaut :",
+          "options": ["\u03b7 = 1 − T\u2082/T\u2081", "\u03b7 = 1 − T\u2081/T\u2082", "\u03b7 = T\u2082/T\u2081", "\u03b7 = T\u2081/T\u2082 − 1"],
+          "bonne": 0,
+          "explication": "Le rendement de Carnot (maximal) est \u03b7 = 1 − T\u2082/T\u2081, avec les températures en kelvins (T\u2081 > T\u2082)."
+        },
+        {
+          "id": "q2d",
+          "enonce": "Une transformation est irréversible lorsque :",
+          "options": ["elle crée de l'entropie (\u0394S_créée > 0)", "\u0394S = 0", "Q = 0", "elle est infiniment lente"],
+          "bonne": 0,
+          "explication": "Une transformation réelle crée de l'entropie (frottements, gradients…) : \u0394S_créée > 0. Le cas réversible (idéal, infiniment lent) correspond à \u0394S_créée = 0."
+        },
+        {
+          "id": "q2e",
+          "enonce": "Une machine frigorifique transfère de la chaleur :",
+          "options": ["de la source froide vers la source chaude, en consommant du travail", "de la source chaude vers la source froide spontanément", "sans aucun apport d'énergie", "uniquement sous forme de travail"],
+          "bonne": 0,
+          "explication": "Une machine frigorifique « remonte » la chaleur du froid vers le chaud ; c'est impossible spontanément, d'où la consommation de travail (2e principe)."
+        }
+      ]
+    }
+  ]
+}

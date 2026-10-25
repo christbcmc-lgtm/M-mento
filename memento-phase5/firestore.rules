@@ -1,0 +1,13 @@
+rules_version = '2';
+// Regles de securite Firestore — Memento.
+// IMPORTANT : toute la logique passe par les fonctions serveur (/api) qui utilisent
+// le compte de service (Admin SDK). L'Admin SDK CONTOURNE ces regles. On verrouille
+// donc TOUT acces direct depuis le navigateur : rien n'est lisible ni modifiable
+// cote client, ce qui protege membres, cles, codes, messages et demandes.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

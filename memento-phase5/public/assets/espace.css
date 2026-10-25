@@ -1,0 +1,76 @@
+/* Mémento — styles de l'espace membre, de l'essai et de l'admin. */
+.wrap.large{max-width:960px}
+.bonjour{color:var(--texte-doux);font-size:14px;font-weight:600;margin-right:4px}
+
+/* Grille de matières */
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-top:14px}
+.carte{position:relative;border:1px solid var(--bordure);border-radius:16px;padding:18px;background:var(--fond);transition:transform .15s,border-color .15s;cursor:pointer}
+.carte:hover{transform:translateY(-3px);border-color:var(--accent)}
+.carte h3{margin:0 0 6px;font-size:17px}
+.carte .etat{font-size:13px;color:var(--texte-doux)}
+.carte .cadenas{position:absolute;top:14px;right:14px;font-size:16px;opacity:.7}
+.carte.estompe{opacity:.5;cursor:not-allowed}
+.carte.estompe:hover{transform:none;border-color:var(--bordure)}
+.carte.verrou{border-style:dashed}
+.carte .tag{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--masque);color:var(--masque-texte)}
+
+/* Messagerie */
+.fil{display:flex;flex-direction:column;gap:10px;margin:8px 0 6px;max-height:340px;overflow:auto;padding:4px}
+.bulle{max-width:82%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.5}
+.bulle .meta{display:block;font-size:11px;opacity:.7;margin-top:4px}
+.bulle.moi{align-self:flex-end;background:var(--accent);color:var(--sur-accent)}
+.bulle.lui{align-self:flex-start;background:var(--masque);color:var(--masque-texte)}
+.bulle .piece{display:inline-block;margin-top:6px;font-weight:700;text-decoration:underline}
+.vide{color:var(--texte-doux);font-size:14px;text-align:center;padding:14px}
+
+/* Minuteries d'essai */
+.bandeau{background:var(--masque);color:var(--masque-texte);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:14px;text-align:center}
+.minuterie{font-weight:800}
+.zone-essai{position:relative}
+.zone-essai.verrouille{filter:blur(4px);pointer-events:none;user-select:none}
+.voile{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:color-mix(in srgb,var(--fond) 78%,transparent);border-radius:16px;text-align:center;padding:18px}
+.voile.on{display:flex}
+
+/* Admin */
+.admin-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:820px){.admin-cols{grid-template-columns:1fr}}
+.ligne{border:1px solid var(--bordure);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--fond)}
+.ligne b{display:block}
+.ligne .sous{font-size:13px;color:var(--texte-doux);margin-top:2px}
+.ligne .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.mini{width:auto;margin:0;padding:8px 14px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border:1px solid var(--bordure);border-radius:999px;padding:4px 10px;font-size:13px;cursor:pointer;user-select:none}
+.chip.on{background:var(--accent);color:var(--sur-accent);border-color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>div{flex:1;min-width:160px}
+
+/* Évaluations (phase 5) */
+.eval-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.eval-liste{display:grid;gap:14px}
+.eval-carte{border:1px solid var(--bordure);border-radius:16px;padding:16px 18px;background:var(--surface)}
+.eval-carte h3{margin:0 0 6px;font-size:16px}
+.eval-meta{color:var(--texte-doux);font-size:13.5px;margin-bottom:4px}
+.eval-carte .btn{margin-top:12px}
+.eval-titre{margin:14px 0 6px}
+.eval-form{display:grid;gap:16px;margin-top:8px}
+.eval-q{border:1px solid var(--bordure);border-radius:14px;padding:12px 14px;margin:0}
+.eval-q legend{font-weight:700;padding:0 6px}
+.eval-opt{display:flex;align-items:flex-start;gap:10px;padding:8px 6px;border-radius:10px;cursor:pointer}
+.eval-opt:hover{background:var(--masque)}
+.eval-opt input{margin-top:3px}
+.eval-score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border:1px solid var(--bordure);border-radius:16px;padding:16px 18px;margin:10px 0 16px;background:var(--surface)}
+.eval-note{font-size:30px;font-weight:800;color:var(--accent)}
+.eval-detail{color:var(--texte-doux)}
+.eval-corr{border:1px solid var(--bordure);border-left-width:4px;border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.eval-corr.ok{border-left-color:var(--succes)}
+.eval-corr.ko{border-left-color:var(--erreur)}
+.eval-corr-q{font-weight:700;margin-bottom:6px}
+.eval-corr-l{font-size:14.5px;margin:2px 0}
+.eval-corr-l.bonne{color:var(--succes);font-weight:600}
+.eval-corr-exp{font-size:13.5px;color:var(--texte-doux);margin-top:6px;border-radius:8px;padding:8px 10px;background:var(--masque)}
+.eval-histo{display:grid;gap:8px}
+.eval-histo-l{display:flex;align-items:center;gap:12px;border:1px solid var(--bordure);border-radius:12px;padding:10px 14px}
+.eval-histo-l .h-titre{flex:1;min-width:0}
+.eval-histo-l .h-note{font-weight:800;color:var(--accent)}
+.eval-histo-l .h-date{color:var(--texte-doux);font-size:13px}
