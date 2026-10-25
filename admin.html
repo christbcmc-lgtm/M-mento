@@ -51,73 +51,110 @@
 <!-- Console admin -->
 <main class="wrap large" id="bloc-admin" hidden>
 
-  <!-- Tableau de bord : récapitulatif -->
-  <section class="panel" style="margin-bottom:18px">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <h2 style="margin:0;flex:1">Tableau de bord</h2>
-      <button class="btn mini ghost" id="rafr-tout">Tout rafraîchir</button>
-    </div>
-    <div class="cartes-stats" id="stats">
-      <div class="stat"><span class="n" id="s-dem">—</span><span class="l">Demandes</span><span class="sub" id="s-dem-a"></span></div>
-      <div class="stat"><span class="n" id="s-mem">—</span><span class="l">Membres</span><span class="sub" id="s-mem-a"></span></div>
-      <div class="stat"><span class="n" id="s-msg">—</span><span class="l">Messages</span><span class="sub" id="s-msg-a"></span></div>
-    </div>
-  </section>
+  <nav class="onglets" id="onglets" role="tablist">
+    <button class="onglet on" data-tab="decisions" role="tab">Décisions</button>
+    <button class="onglet" data-tab="membres" role="tab">Membres</button>
+    <button class="onglet" data-tab="messagerie" role="tab">Messagerie</button>
+    <button class="onglet" data-tab="essais" role="tab">Essais</button>
+    <span class="spacer"></span>
+    <button class="btn mini ghost" id="rafr-tout" title="Mettre à jour" aria-label="Mettre à jour">↻</button>
+  </nav>
 
-  <div class="admin-cols">
+  <!-- ============ ONGLET : DÉCISIONS ============ -->
+  <div class="tab-pane on" data-pane="decisions">
     <section class="panel">
-      <h2 style="margin-top:0">Demandes d'accès</h2>
-      <button class="btn mini ghost" id="rafr-dem">Rafraîchir</button>
+      <h2 style="margin-top:0">Demandes à traiter</h2>
+      <p class="aide">Accordez ou rejetez chaque demande. Une demande déjà <b>traitée</b> n'affiche plus « Rejeter » ; une demande <b>rejetée</b> peut être reconsidérée.</p>
       <div id="liste-dem" style="margin-top:12px"></div>
     </section>
+
+    <section class="panel" style="margin-top:18px">
+      <h2 style="margin-top:0">Accorder / activer un accès</h2>
+      <p class="aide">Cliquez « Préparer l'activation » sur une demande : les coordonnées se remplissent toutes seules. Il ne vous reste qu'à <b>cocher</b> les matières puis valider — rien à taper.</p>
+      <div class="row">
+        <div><label for="g-prenom">Prénom</label><input id="g-prenom"></div>
+        <div><label for="g-nom">Nom</label><input id="g-nom"></div>
+      </div>
+      <div class="row">
+        <div><label for="g-mail">Email</label><input id="g-mail" type="email"></div>
+        <div><label for="g-num">Numéro (facultatif — preuve d'identité)</label><input id="g-num"></div>
+      </div>
+      <label>Matières à inclure <span class="aide" style="font-weight:400">(cochez — multi-sélection)</span></label>
+      <div class="chips" id="g-chips"><span class="aide">Chargement des matières…</span></div>
+      <label for="g-duree" style="margin-top:14px">Durée de l'accès</label>
+      <select id="g-duree">
+        <option value="0">Illimitée</option>
+        <option value="30">1 mois (30 jours)</option>
+        <option value="90">3 mois (90 jours)</option>
+        <option value="180">6 mois (180 jours)</option>
+        <option value="365">1 an (365 jours)</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:600">
+        <input type="checkbox" id="g-code" style="width:auto" checked> Générer automatiquement un code par matière
+      </label>
+      <input type="hidden" id="g-demande">
+      <div class="err" id="g-err"></div>
+      <button class="btn" id="g-ok">Accorder l'accès et envoyer la clé</button>
+    </section>
+  </div>
+
+  <!-- ============ ONGLET : MEMBRES ============ -->
+  <div class="tab-pane" data-pane="membres">
+    <section class="panel" style="margin-bottom:18px">
+      <h2 style="margin:0 0 10px">Tableau de bord</h2>
+      <div class="cartes-stats" id="stats">
+        <div class="stat"><span class="n" id="s-dem">—</span><span class="l">Demandes</span><span class="sub" id="s-dem-a"></span></div>
+        <div class="stat"><span class="n" id="s-mem">—</span><span class="l">Membres</span><span class="sub" id="s-mem-a"></span></div>
+        <div class="stat"><span class="n" id="s-msg">—</span><span class="l">Messages</span><span class="sub" id="s-msg-a"></span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin-top:0">Membres</h2>
+      <p class="aide">Récapitulatif de tous les membres. Vous pouvez <b>suspendre</b> (couper l'accès) ou <b>réactiver</b> un membre.</p>
+      <div id="liste-mem" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel" style="margin-top:18px">
+      <h2 style="margin-top:0">Contenu &amp; ressources par matière</h2>
+      <p class="aide">Attachez à chaque matière des PDF / livres (nom + lien). Les membres abonnés les verront sur la page de la matière.</p>
+      <label for="r-mat">Matière</label>
+      <select id="r-mat"></select>
+      <div id="r-liste" style="margin-top:12px"></div>
+      <div class="row" style="margin-top:10px">
+        <div><label for="r-nom">Nom de la ressource</label><input id="r-nom" placeholder="Cours de thermodynamique.pdf"></div>
+        <div><label for="r-url">Lien</label><input id="r-url" placeholder="https://…"></div>
+      </div>
+      <div class="err" id="r-err"></div>
+      <button class="btn mini" id="r-add" type="button">Ajouter la ressource</button>
+      <button class="btn" id="r-save" style="margin-top:10px">Enregistrer les ressources</button>
+    </section>
+  </div>
+
+  <!-- ============ ONGLET : MESSAGERIE ============ -->
+  <div class="tab-pane" data-pane="messagerie">
     <section class="panel">
       <h2 style="margin-top:0">Messagerie</h2>
-      <button class="btn mini ghost" id="rafr-msg">Rafraîchir</button>
+      <p class="aide">Fils de discussion privés avec les membres. Votre adresse n'est jamais exposée.</p>
       <div id="liste-msg" style="margin-top:12px"></div>
     </section>
   </div>
 
-  <section class="panel" style="margin-top:18px">
-    <h2 style="margin-top:0">Accorder / activer un accès</h2>
-    <p class="aide">Cliquez « Préparer l'activation » sur une demande : les coordonnées se remplissent toutes seules. Il ne vous reste qu'à <b>cocher</b> les matières puis valider — rien à taper.</p>
-    <div class="row">
-      <div><label for="g-prenom">Prénom</label><input id="g-prenom"></div>
-      <div><label for="g-nom">Nom</label><input id="g-nom"></div>
-    </div>
-    <div class="row">
-      <div><label for="g-mail">Email</label><input id="g-mail" type="email"></div>
-      <div><label for="g-num">Numéro (facultatif — preuve d'identité)</label><input id="g-num"></div>
-    </div>
-    <label>Matières à inclure <span class="aide" style="font-weight:400">(cochez — multi-sélection)</span></label>
-    <div class="chips" id="g-chips"><span class="aide">Chargement des matières…</span></div>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:600">
-      <input type="checkbox" id="g-code" style="width:auto" checked> Générer automatiquement un code par matière
-    </label>
-    <input type="hidden" id="g-demande">
-    <div class="err" id="g-err"></div>
-    <button class="btn" id="g-ok">Accorder l'accès et envoyer la clé</button>
-  </section>
-
-  <!-- Membres -->
-  <section class="panel" style="margin-top:18px">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <h2 style="margin:0;flex:1">Membres</h2>
-      <button class="btn mini ghost" id="rafr-mem">Rafraîchir</button>
-    </div>
-    <div id="liste-mem" style="margin-top:12px"></div>
-  </section>
-
-  <section class="panel" style="margin-top:18px">
-    <h2 style="margin-top:0">Inviter à un essai gratuit</h2>
-    <label for="e-mail">Email du destinataire</label>
-    <input id="e-mail" type="email">
-    <div class="err" id="e-err"></div>
-    <button class="btn" id="e-ok">Envoyer l'invitation d'essai</button>
-    <div id="e-lien" hidden style="margin-top:12px">
-      <label>Lien d'essai (vous pouvez le copier et l'envoyer vous-même) :</label>
-      <div class="copie-lien"><input id="e-lien-url" readonly><button class="btn mini" id="e-lien-copy" type="button">Copier</button></div>
-    </div>
-  </section>
+  <!-- ============ ONGLET : ESSAIS ============ -->
+  <div class="tab-pane" data-pane="essais">
+    <section class="panel">
+      <h2 style="margin-top:0">Inviter à un essai gratuit</h2>
+      <p class="aide">L'essai est un aperçu en lecture seule, limité dans le temps (quelques minutes par zone).</p>
+      <label for="e-mail">Email du destinataire</label>
+      <input id="e-mail" type="email">
+      <div class="err" id="e-err"></div>
+      <button class="btn" id="e-ok">Envoyer l'invitation d'essai</button>
+      <div id="e-lien" hidden style="margin-top:12px">
+        <label>Lien d'essai (vous pouvez le copier et l'envoyer vous-même) :</label>
+        <div class="copie-lien"><input id="e-lien-url" readonly><button class="btn mini" id="e-lien-copy" type="button">Copier</button></div>
+      </div>
+    </section>
+  </div>
 </main>
 
 <!-- Modale : répondre à un message -->

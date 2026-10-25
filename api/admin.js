@@ -5,6 +5,7 @@ const { sendMail, wrap } = require('./_lib/mail');
 const { hash, nouvelleCle, nouveauCode } = require('./_lib/secret');
 const { signInviteEssai } = require('./_lib/token');
 const { readBody, send, methodGuard, validEmail, clean } = require('./_lib/http');
+const { fusionner } = require('./_lib/catalogue');
 
 async function estAdmin(req) {
   const h = req.headers['authorization'] || '';
@@ -28,8 +29,9 @@ module.exports = async (req, res) => {
     const now = new Date();
 
     if (action === 'list_matieres') {
-      const s = await base.collection('matieres').orderBy('ordre').get();
-      return send(res, 200, { ok: true, matieres: s.docs.map((d) => ({ id: d.id, nom: (d.data().nom || d.id), ordre: d.data().ordre || 0 })) });
+      const s = await base.collection('matieres').get().catch(() => ({ docs: [] }));
+      const cat = fusionner(s.docs || []);
+      return send(res, 200, { ok: true, matieres: cat.map((m) => ({ id: m.id, nom: m.nom, ordre: m.ordre || 0, bientot: !!m.bientot, ressources: m.ressources || [] })) });
     }
 
     if (action === 'stats') {
@@ -61,6 +63,7 @@ module.exports = async (req, res) => {
           id: d.id, prenom: x.prenom || '', nom: x.nom || '', email: x.email || '',
           statut: x.statut || '', numero: x.numero || '',
           compteurAcces: x.compteurAcces || 0, majLe: x.majLe || null,
+          expireLe: x.expireLe || null,
           matieres: Object.keys(abo).filter((k) => abo[k] && abo[k].abonne)
         };
       }) });
@@ -88,6 +91,47 @@ module.exports = async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
+    if (action === 'reconsiderer') {
+      // Rouvre une demande rejetee (en cas d'erreur de l'admin) : repasse en attente.
+      const id = clean(b.demandeId, 60);
+      if (!id) return send(res, 400, { ok: false, erreur: 'Demande inconnue.' });
+      await base.collection('demandes').doc(id).set({ statut: 'nouvelle', rejeteLe: null, motif: null }, { merge: true }).catch(() => {});
+      return send(res, 200, { ok: true });
+    }
+
+    if (action === 'resilier') {
+      // Suspend REELLEMENT un membre actif : son lien personnel cesse de fonctionner.
+      const id = clean(b.membreId, 60);
+      if (!id) return send(res, 400, { ok: false, erreur: 'Membre inconnu.' });
+      await base.collection('membres').doc(id).set({ statut: 'suspendu', suspenduLe: now, majLe: now }, { merge: true });
+      const snap = await base.collection('membres').doc(id).get();
+      const email = snap.exists ? snap.data().email : null;
+      if (email) await sendMail(email, 'Acces suspendu — Memento',
+        wrap('Acces suspendu', 'Bonjour,<br>Votre acces a Memento a ete suspendu par l\'administrateur. ' +
+          'Pour toute question, repondez a ce message ou ecrivez via votre espace.',
+          { url: site + '/', texte: 'Revenir sur Memento' })).catch(() => {});
+      return send(res, 200, { ok: true });
+    }
+
+    if (action === 'reactiver') {
+      // Reactive un membre precedemment suspendu (sans nouvelle cle).
+      const id = clean(b.membreId, 60);
+      if (!id) return send(res, 400, { ok: false, erreur: 'Membre inconnu.' });
+      await base.collection('membres').doc(id).set({ statut: 'actif', suspenduLe: null, majLe: now }, { merge: true });
+      return send(res, 200, { ok: true });
+    }
+
+    if (action === 'maj_ressources') {
+      // Attache a une matiere une liste de ressources (PDF/livres) par nom + lien.
+      const mid = clean(b.matiere, 60);
+      if (!mid) return send(res, 400, { ok: false, erreur: 'Matiere inconnue.' });
+      const ressources = Array.isArray(b.ressources)
+        ? b.ressources.slice(0, 50).map((x) => ({ nom: clean(x.nom, 160), url: clean(x.url, 1000) })).filter((x) => x.nom && x.url)
+        : [];
+      await base.collection('matieres').doc(mid).set({ ressources, majLe: now }, { merge: true });
+      return send(res, 200, { ok: true, ressources });
+    }
+
     if (action === 'list_messages') {
       const s = await base.collection('messages').orderBy('majLe', 'desc').limit(100).get();
       return send(res, 200, { ok: true, fils: s.docs.map((d) => Object.assign({ id: d.id }, d.data())) });
@@ -100,6 +144,9 @@ module.exports = async (req, res) => {
       const nom = clean(b.nom, 80), prenom = clean(b.prenom, 80), numero = clean(b.numero, 30);
       const matieres = Array.isArray(b.matieres) ? b.matieres.map((x) => clean(x, 60)).filter(Boolean) : [];
       const avecCode = b.avecCode === true;
+      // Echeance d'acces (facultative) : duree en jours -> date d'expiration.
+      const dureeJours = Number(b.dureeJours) || 0;
+      const expireLe = dureeJours > 0 ? new Date(now.getTime() + dureeJours * 86400000) : null;
       const cle = nouvelleCle();
       const abo = {};
       const codesClairs = {};
@@ -109,7 +156,7 @@ module.exports = async (req, res) => {
         abo[mt] = { abonne: true, codeHash };
       }
       const existant = await base.collection('membres').where('email', '==', email).limit(1).get();
-      const data = { nom, prenom, email, numero, statut: 'cle_emise', cleHash: hash(cle), matieres: abo, compteurAcces: 0, majLe: now };
+      const data = { nom, prenom, email, numero, statut: 'cle_emise', cleHash: hash(cle), matieres: abo, compteurAcces: 0, expireLe, majLe: now };
       let id;
       if (existant.empty) { const r = await base.collection('membres').add(Object.assign({ creeLe: now }, data)); id = r.id; }
       else { id = existant.docs[0].id; await existant.docs[0].ref.set(data, { merge: true }); }

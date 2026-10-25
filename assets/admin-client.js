@@ -45,6 +45,7 @@
     return appel('list_matieres').then(function(res){
       if (res.ok && res.j.ok) { MATIERES_DEF = res.j.matieres || []; }
       rendreChips();
+      peuplerSelectMatieres();
     }).catch(function(){ rendreChips(); });
   }
   function matieresChoisies(){
@@ -70,10 +71,38 @@
     list.forEach(function(m){
       var el = document.createElement('div'); el.className = 'ligne';
       var mats = (m.matieres||[]).map(nomMatiere).join(', ') || '—';
-      var badge = m.statut === 'actif' ? '✔ actif' : (m.statut === 'cle_emise' ? '⏳ clé émise' : esc(m.statut));
-      el.innerHTML = '<b>' + esc((m.prenom||'') + ' ' + (m.nom||'')) + '</b>' +
-        '<div class="sous">' + esc(m.email||'') + ' • ' + badge + ' • ' + (m.compteurAcces||0) + ' accès</div>' +
+      var badge = m.statut === 'actif' ? '<span class="badge ok">✔ actif</span>'
+                : m.statut === 'suspendu' ? '<span class="badge ko">⛔ suspendu</span>'
+                : m.statut === 'cle_emise' ? '<span class="badge att">⏳ clé émise</span>'
+                : '<span class="badge">' + esc(m.statut) + '</span>';
+      var ech = m.expireLe ? ' • échéance ' + dateFr(m.expireLe) : ' • accès illimité';
+      el.innerHTML = '<b>' + esc((m.prenom||'') + ' ' + (m.nom||'')) + '</b> ' + badge +
+        '<div class="sous">' + esc(m.email||'') + ' • ' + (m.compteurAcces||0) + ' accès' + ech + '</div>' +
         '<div class="sous">Matières : ' + esc(mats) + '</div>';
+      var act = document.createElement('div'); act.className = 'actions';
+      if (m.statut === 'suspendu') {
+        var ra = document.createElement('button'); ra.className = 'btn mini'; ra.textContent = 'Réactiver';
+        ra.addEventListener('click', function(){
+          ra.disabled = true; ra.textContent = '…';
+          appel('reactiver', { membreId: m.id }).then(function(res){
+            if (res.ok && res.j.ok) { chargerMembres(); chargerStats(); }
+            else { ra.disabled = false; ra.textContent = 'Réactiver'; }
+          }).catch(function(){ ra.disabled = false; ra.textContent = 'Réactiver'; });
+        });
+        act.appendChild(ra);
+      } else if (m.statut === 'actif' || m.statut === 'cle_emise') {
+        var rs = document.createElement('button'); rs.className = 'btn mini ghost'; rs.textContent = 'Suspendre l\'accès';
+        rs.addEventListener('click', function(){
+          if (!window.confirm('Suspendre l\'accès de ' + (m.email||'') + ' ? Son lien personnel cessera de fonctionner.')) return;
+          rs.disabled = true; rs.textContent = '…';
+          appel('resilier', { membreId: m.id }).then(function(res){
+            if (res.ok && res.j.ok) { chargerMembres(); chargerStats(); }
+            else { rs.disabled = false; rs.textContent = 'Suspendre l\'accès'; }
+          }).catch(function(){ rs.disabled = false; rs.textContent = 'Suspendre l\'accès'; });
+        });
+        act.appendChild(rs);
+      }
+      if (act.childNodes.length) el.appendChild(act);
       box.appendChild(el);
     });
   }
@@ -88,30 +117,53 @@
     list.forEach(function(d){
       var el = document.createElement('div');
       el.className = 'ligne';
-      var statut = d.statut === 'traitee' ? ' • traitée' : (d.statut === 'rejetee' ? ' • rejetée' : '');
-      el.innerHTML = '<b>' + esc((d.prenom||'') + ' ' + (d.nom||'')) + '</b>' +
-        '<div class="sous">' + esc(d.email||'') + ' • ' + dateFr(d.creeLe) + statut + '</div>' +
-        (d.message ? '<div class="sous">« ' + esc(d.message) + ' »</div>' : '');
+      var traitee = d.statut === 'traitee';
+      var rejetee = d.statut === 'rejetee';
+      var badge = traitee ? '<span class="badge ok">✔ Devenu membre</span>'
+                : rejetee ? '<span class="badge ko">✖ Rejetée</span>'
+                : '<span class="badge att">⏳ En attente</span>';
+      el.innerHTML = '<b>' + esc((d.prenom||'') + ' ' + (d.nom||'')) + '</b> ' + badge +
+        '<div class="sous">' + esc(d.email||'') + ' • ' + dateFr(d.creeLe) + '</div>' +
+        (d.message ? '<div class="sous">« ' + esc(d.message) + ' »</div>' : '') +
+        (rejetee && d.motif ? '<div class="sous">Motif : ' + esc(d.motif) + '</div>' : '');
       var act = document.createElement('div'); act.className = 'actions';
-      var b = document.createElement('button'); b.className = 'btn mini'; b.textContent = 'Préparer l\'activation';
-      b.addEventListener('click', function(){
-        $('g-prenom').value = d.prenom || ''; $('g-nom').value = d.nom || '';
-        $('g-mail').value = d.email || ''; $('g-demande').value = d.id || '';
-        $('g-ok').scrollIntoView({ behavior:'smooth', block:'center' });
-      });
-      act.appendChild(b);
-      var r = document.createElement('button'); r.className = 'btn mini ghost'; r.textContent = 'Rejeter';
-      r.addEventListener('click', function(){
-        var motif = window.prompt('Motif du refus (facultatif, visible par le demandeur) :', '') ;
-        if (motif === null) return;
-        r.disabled = true; r.textContent = '…';
-        appel('rejeter', { demandeId: d.id, email: d.email, motif: motif }).then(function(res){
-          if (res.ok && res.j.ok) { chargerDemandes(); chargerStats(); }
-          else { r.disabled = false; r.textContent = 'Rejeter'; }
-        }).catch(function(){ r.disabled = false; r.textContent = 'Rejeter'; });
-      });
-      act.appendChild(r);
-      el.appendChild(act); box.appendChild(el);
+
+      if (!traitee && !rejetee) {
+        // Demande EN ATTENTE : on peut l'accorder ou la rejeter.
+        var b = document.createElement('button'); b.className = 'btn mini'; b.textContent = 'Préparer l\'activation';
+        b.addEventListener('click', function(){
+          allerOnglet('decisions');
+          $('g-prenom').value = d.prenom || ''; $('g-nom').value = d.nom || '';
+          $('g-mail').value = d.email || ''; $('g-demande').value = d.id || '';
+          $('g-ok').scrollIntoView({ behavior:'smooth', block:'center' });
+        });
+        act.appendChild(b);
+        var r = document.createElement('button'); r.className = 'btn mini ghost'; r.textContent = 'Rejeter';
+        r.addEventListener('click', function(){
+          var motif = window.prompt('Motif du refus (facultatif, visible par le demandeur) :', '');
+          if (motif === null) return;
+          r.disabled = true; r.textContent = '…';
+          appel('rejeter', { demandeId: d.id, email: d.email, motif: motif }).then(function(res){
+            if (res.ok && res.j.ok) { chargerDemandes(); chargerStats(); }
+            else { r.disabled = false; r.textContent = 'Rejeter'; }
+          }).catch(function(){ r.disabled = false; r.textContent = 'Rejeter'; });
+        });
+        act.appendChild(r);
+      } else if (rejetee) {
+        // Demande REJETÉE : possibilité de la rouvrir (erreur de l'admin).
+        var rc = document.createElement('button'); rc.className = 'btn mini ghost'; rc.textContent = 'Reconsidérer';
+        rc.addEventListener('click', function(){
+          rc.disabled = true; rc.textContent = '…';
+          appel('reconsiderer', { demandeId: d.id }).then(function(res){
+            if (res.ok && res.j.ok) { chargerDemandes(); chargerStats(); }
+            else { rc.disabled = false; rc.textContent = 'Reconsidérer'; }
+          }).catch(function(){ rc.disabled = false; rc.textContent = 'Reconsidérer'; });
+        });
+        act.appendChild(rc);
+      }
+      // Demande TRAITÉE : aucun bouton (la gestion se fait dans l'onglet Membres).
+      if (act.childNodes.length) el.appendChild(act);
+      box.appendChild(el);
     });
   }
   function chargerDemandes(){
@@ -176,6 +228,7 @@
       prenom: $('g-prenom').value.trim(), nom: $('g-nom').value.trim(),
       email: email, numero: $('g-num').value.trim(),
       matieres: mats, avecCode: $('g-code').checked,
+      dureeJours: Number(($('g-duree')||{}).value || 0),
       demandeId: $('g-demande').value || null
     }).then(function(res){
       if (!res.ok || !res.j.ok) { $('g-err').textContent = (res.j && res.j.erreur) || 'Opération impossible.'; return; }
@@ -205,6 +258,77 @@
     else { try{document.execCommand('copy');}catch(e){} done(); }
   }
 
+  /* ---------- Onglets ---------- */
+  function allerOnglet(nom){
+    var tabs = document.querySelectorAll('#onglets .onglet');
+    for (var i=0;i<tabs.length;i++){ tabs[i].classList.toggle('on', tabs[i].getAttribute('data-tab') === nom); }
+    var panes = document.querySelectorAll('.tab-pane');
+    for (var j=0;j<panes.length;j++){ panes[j].classList.toggle('on', panes[j].getAttribute('data-pane') === nom); }
+    // Rafraîchit les données de l'onglet ouvert (pas de bouton à cliquer).
+    if (nom === 'decisions') { chargerDemandes(); }
+    else if (nom === 'membres') { chargerStats(); chargerMembres(); }
+    else if (nom === 'messagerie') { chargerMessages(); }
+  }
+
+  /* ---------- Éditeur de ressources par matière ---------- */
+  var ressourcesCourantes = [];
+  function matiereSel(){ return ($('r-mat')||{}).value || ''; }
+  function ressourcesDe(id){ for (var i=0;i<MATIERES_DEF.length;i++){ if (MATIERES_DEF[i].id===id) return (MATIERES_DEF[i].ressources||[]).slice(); } return []; }
+  function peuplerSelectMatieres(){
+    var sel = $('r-mat'); if (!sel) return;
+    var garde = sel.value;
+    sel.innerHTML = '';
+    MATIERES_DEF.forEach(function(m){ var o = document.createElement('option'); o.value = m.id; o.textContent = m.nom; sel.appendChild(o); });
+    if (garde) sel.value = garde;
+    chargerRessources();
+  }
+  function rendreRessources(){
+    var box = $('r-liste'); if (!box) return; box.innerHTML = '';
+    if (!ressourcesCourantes.length) { box.innerHTML = '<div class="vide">Aucune ressource pour cette matière.</div>'; return; }
+    ressourcesCourantes.forEach(function(rs, idx){
+      var el = document.createElement('div'); el.className = 'ligne';
+      el.innerHTML = '<b>' + esc(rs.nom) + '</b><div class="sous">' + esc(rs.url) + '</div>';
+      var act = document.createElement('div'); act.className = 'actions';
+      var del = document.createElement('button'); del.className = 'btn mini ghost'; del.textContent = 'Retirer';
+      del.addEventListener('click', function(){ ressourcesCourantes.splice(idx,1); rendreRessources(); });
+      act.appendChild(del); el.appendChild(act); box.appendChild(el);
+    });
+  }
+  function chargerRessources(){ ressourcesCourantes = ressourcesDe(matiereSel()); rendreRessources(); }
+  function ajouterRessource(){
+    var nom = $('r-nom').value.trim(), url = $('r-url').value.trim();
+    if (!nom || !url) { $('r-err').textContent = 'Nom et lien requis.'; return; }
+    if (!/^https?:\/\//i.test(url)) { $('r-err').textContent = 'Le lien doit commencer par http(s)://'; return; }
+    $('r-err').textContent = '';
+    ressourcesCourantes.push({ nom: nom, url: url });
+    $('r-nom').value = ''; $('r-url').value = '';
+    rendreRessources();
+  }
+  function enregistrerRessources(){
+    var id = matiereSel(); if (!id) return;
+    $('r-err').textContent = '';
+    appel('maj_ressources', { matiere: id, ressources: ressourcesCourantes }).then(function(res){
+      if (!res.ok || !res.j.ok) { $('r-err').textContent = (res.j && res.j.erreur) || 'Enregistrement impossible.'; return; }
+      $('r-err').textContent = 'Ressources enregistrées ✔';
+      chargerMatieres();
+    }).catch(function(){ $('r-err').textContent = 'Réseau indisponible.'; });
+  }
+
+  /* ---------- Rafraîchissement automatique ---------- */
+  var pouls = null;
+  function demarrerPouls(){
+    if (pouls) return;
+    pouls = setInterval(function(){
+      if (!auth.currentUser) return;
+      chargerStats();
+      var ouvert = document.querySelector('.tab-pane.on');
+      var nom = ouvert ? ouvert.getAttribute('data-pane') : '';
+      if (nom === 'decisions') chargerDemandes();
+      else if (nom === 'membres') chargerMembres();
+      else if (nom === 'messagerie') chargerMessages();
+    }, 20000);
+  }
+
   /* ---------- Auth ---------- */
   function connexion(e){
     e.preventDefault();
@@ -217,15 +341,20 @@
     rendreChips();
     $('f-login').addEventListener('submit', connexion);
     $('deco').addEventListener('click', function(){ auth.signOut(); });
-    $('rafr-dem').addEventListener('click', chargerDemandes);
-    $('rafr-msg').addEventListener('click', chargerMessages);
-    $('rafr-mem').addEventListener('click', chargerMembres);
-    $('rafr-tout').addEventListener('click', function(){ chargerStats(); chargerDemandes(); chargerMessages(); chargerMembres(); });
+    // Onglets
+    var tabs = document.querySelectorAll('#onglets .onglet');
+    for (var i=0;i<tabs.length;i++){ (function(t){ t.addEventListener('click', function(){ allerOnglet(t.getAttribute('data-tab')); }); })(tabs[i]); }
+    var rt = $('rafr-tout');
+    if (rt) rt.addEventListener('click', function(){ chargerStats(); chargerDemandes(); chargerMessages(); chargerMembres(); });
     $('g-ok').addEventListener('click', accorder);
     $('e-ok').addEventListener('click', inviterEssai);
     $('e-lien-copy').addEventListener('click', function(){ copier($('e-lien-url'), this); });
     $('rep-ok').addEventListener('click', envoyerReponse);
     $('rep-fermer').addEventListener('click', function(){ $('ov-rep').classList.remove('on'); });
+    // Ressources par matière
+    if ($('r-mat')) $('r-mat').addEventListener('change', chargerRessources);
+    if ($('r-add')) $('r-add').addEventListener('click', ajouterRessource);
+    if ($('r-save')) $('r-save').addEventListener('click', enregistrerRessources);
 
     auth.onAuthStateChanged(function(user){
       if (user) {
@@ -233,6 +362,7 @@
         $('deco').hidden = false; $('qui').textContent = user.email || '';
         chargerMatieres().then(function(){ chargerMembres(); });
         chargerStats(); chargerDemandes(); chargerMessages();
+        demarrerPouls();
       } else {
         $('bloc-login').hidden = false; $('bloc-admin').hidden = true;
         $('deco').hidden = true; $('qui').textContent = '';

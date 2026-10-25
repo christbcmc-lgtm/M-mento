@@ -44,3 +44,31 @@
 .chip.on{background:var(--accent);color:var(--sur-accent);border-color:var(--accent)}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .row>div{flex:1;min-width:160px}
+
+/* Onglets de la console d'administration */
+.onglets{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--bordure);padding-bottom:4px}
+.onglet{border:0;background:transparent;color:var(--texte-doux);font:inherit;font-weight:600;padding:8px 14px;border-radius:10px 10px 0 0;cursor:pointer}
+.onglet:hover{color:var(--texte)}
+.onglet.on{background:var(--accent);color:var(--sur-accent)}
+.tab-pane{display:none}
+.tab-pane.on{display:block;animation:apparait .18s ease}
+@keyframes apparait{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* Badges d'état */
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid var(--bordure);color:var(--texte-doux);vertical-align:middle}
+.badge.ok{background:rgba(34,160,90,.14);color:#1a7a44;border-color:rgba(34,160,90,.4)}
+.badge.ko{background:rgba(200,50,50,.14);color:#b02a2a;border-color:rgba(200,50,50,.4)}
+.badge.att{background:rgba(210,150,20,.14);color:#9a6a00;border-color:rgba(210,150,20,.4)}
+
+/* Cartes de statistiques */
+.cartes-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
+@media (max-width:640px){.cartes-stats{grid-template-columns:1fr}}
+.stat{border:1px solid var(--bordure);border-radius:12px;padding:14px;background:var(--fond);text-align:center}
+.stat .n{display:block;font-size:28px;font-weight:800;color:var(--accent);line-height:1}
+.stat .l{display:block;font-weight:600;margin-top:4px}
+.stat .sub{display:block;font-size:12px;color:var(--texte-doux);margin-top:2px}
+
+/* Ressources (PDF/livres) côté membre */
+.ressources{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.ressource{display:flex;align-items:center;gap:8px;border:1px solid var(--bordure);border-radius:10px;padding:10px 12px;background:var(--fond);text-decoration:none;color:var(--texte);font-weight:600}
+.ressource:hover{border-color:var(--accent)}

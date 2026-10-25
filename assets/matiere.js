@@ -3,12 +3,29 @@
 (function () {
   function $(id){ return document.getElementById(id); }
   function qs(k){ return new URLSearchParams(location.search).get(k) || ''; }
+  function esc(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
   var TOKEN = qs('t'), MAT = qs('m');
 
   function montrerErreur(msg){
     $('contenu').hidden = true;
     var b = $('bloc-erreur'); b.hidden = false;
     if (msg) $('txt-erreur').textContent = msg;
+  }
+
+  function rendreRessources(list){
+    var bloc = $('bloc-ressources'), box = $('ressources');
+    if (!bloc || !box) return;
+    box.innerHTML = '';
+    if (!list || !list.length) { bloc.hidden = true; return; }
+    list.forEach(function(r){
+      if (!r || !r.url) return;
+      var a = document.createElement('a');
+      a.className = 'ressource';
+      a.href = r.url; a.target = '_blank'; a.rel = 'noopener';
+      a.innerHTML = '\uD83D\uDCCE ' + esc(r.nom || 'Document');
+      box.appendChild(a);
+    });
+    bloc.hidden = box.childNodes.length ? false : true;
   }
 
   function trouverCours(id, nom){
@@ -35,6 +52,7 @@
         $('contenu').hidden = false;
         $('titre').textContent = m.nom;
         document.title = 'Mémento — ' + m.nom;
+        rendreRessources(m.ressources || []);
         var cours = trouverCours(MAT, m.nom);
         if (cours && window.CoursReader) {
           var ph = $('placeholder-matiere'); if (ph) ph.hidden = true;

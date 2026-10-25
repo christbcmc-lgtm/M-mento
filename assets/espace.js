@@ -21,13 +21,16 @@
 
   function carte(m){
     var div = document.createElement('div');
+    var bientot = !!m.bientot;
     div.className = 'carte' + (m.abonne ? (m.besoinCode ? ' verrou' : '') : ' estompe');
-    var etat = m.abonne ? (m.besoinCode ? 'Code requis' : 'Ouverte') : 'Non incluse';
-    div.innerHTML = '<span class="cadenas">' + (m.abonne ? (m.besoinCode ? '\uD83D\uDD12' : '\uD83D\uDCD6') : '\uD83D\uDD12') + '</span>' +
+    var etat = bientot ? 'Bientôt disponible'
+             : m.abonne ? (m.besoinCode ? 'Code requis' : 'Ouverte')
+             : 'Non incluse';
+    div.innerHTML = '<span class="cadenas">' + (m.abonne && !bientot ? (m.besoinCode ? '\uD83D\uDD12' : '\uD83D\uDCD6') : '\uD83D\uDD12') + '</span>' +
       '<h3>' + esc(m.nom) + '</h3>' +
       '<div class="etat">' + etat + '</div>' +
-      (m.abonne ? '' : '<span class="tag">Demander à l\'admin</span>');
-    if (m.abonne) {
+      (bientot ? '<span class="tag">Bientôt</span>' : (m.abonne ? '' : '<span class="tag">Demander à l\'admin</span>'));
+    if (m.abonne && !bientot) {
       div.addEventListener('click', function(){
         if (m.besoinCode) { ouvrirModaleCode(m); }
         else { ouvrirMatiere(m); }
