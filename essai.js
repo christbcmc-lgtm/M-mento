@@ -1,36 +1,76 @@
-// POST /api/essai — delivre un jeton d'essai gratuit STRICT (juste pour visualiser le site).
-// Lecture seule, sans code, sans telechargement. Limites de temps par zone (cote serveur).
-// GET /api/essai?t=JETON -> renvoie les limites restantes (le client applique les minuteries).
-const { db } = require('./_lib/firebase');
-const { signEssai, verify } = require('./_lib/token');
-const { readBody, send, clean } = require('./_lib/http');
+/* Mémento — essai gratuit STRICT. Lecture seule : minuteries par zone + minuterie globale.
+   Quand une zone atteint 0, elle est verrouillée (floutee). Aucun gestionnaire en ligne. */
+(function () {
+  function $(id){ return document.getElementById(id); }
+  function qs(k){ return new URLSearchParams(location.search).get(k) || ''; }
+  function mmss(s){ s = Math.max(0, Math.round(s)); var m = Math.floor(s/60); var r = s%60; return m + ':' + (r<10?'0':'') + r; }
 
-// Durees volontairement courtes (secondes) : empeche l'essai de servir au piratage.
-const LIMITES = { cours: 300, evaluation: 90, revision: 90, exercices: 120 };
-const DUREE_GLOBALE_MIN = 15;
+  var INVIT = qs('i');
+  var timers = {};
 
-module.exports = async (req, res) => {
-  try {
-    if (req.method === 'POST') {
-      const b = await readBody(req);
-      // Un essai est autorise par l'admin : on exige un jeton d'invitation d'essai.
-      const inv = clean(b.invitation, 2000);
-      const pi = verify(inv);
-      if (!pi || pi.t !== 'invite_essai') {
-        return send(res, 403, { ok: false, erreur: 'Essai non autorise.' });
-      }
-      const doc = await db().collection('essais').add({ creeLe: new Date(), origine: 'invitation' });
-      const token = signEssai(doc.id, DUREE_GLOBALE_MIN);
-      return send(res, 200, { ok: true, token, limites: LIMITES, dureeGlobaleMin: DUREE_GLOBALE_MIN });
-    }
-    if (req.method === 'GET') {
-      const url = new URL(req.url, 'http://x');
-      const p = verify(url.searchParams.get('t') || '');
-      if (!p || p.t !== 'essai') return send(res, 401, { ok: false, erreur: 'Essai expire.' });
-      return send(res, 200, { ok: true, limites: LIMITES, lectureSeule: true });
-    }
-    return send(res, 405, { ok: false, erreur: 'Methode non autorisee.' });
-  } catch (e) {
-    return send(res, 500, { ok: false, erreur: 'Erreur serveur.' });
+  function montrerErreur(msg){
+    $('essai').hidden = true;
+    var b = $('bloc-erreur'); b.hidden = false;
+    if (msg) $('txt-erreur').textContent = msg;
   }
-};
+
+  function verrouiller(zone){
+    var sec = document.querySelector('.zone-essai[data-zone="' + zone + '"]');
+    if (!sec) return;
+    sec.classList.add('verrouille');
+    var v = sec.querySelector('.voile'); if (v) v.classList.add('on');
+  }
+
+  function lancerZone(zone, secondes){
+    var span = document.querySelector('.minuterie[data-timer="' + zone + '"]');
+    var reste = secondes;
+    if (span) span.textContent = '(' + mmss(reste) + ')';
+    timers[zone] = setInterval(function(){
+      reste -= 1;
+      if (span) span.textContent = '(' + mmss(reste) + ')';
+      if (reste <= 0) { clearInterval(timers[zone]); if (span) span.textContent = '(0:00)'; verrouiller(zone); }
+    }, 1000);
+  }
+
+  function lancerGlobal(minutes){
+    var reste = minutes * 60;
+    var span = $('glob');
+    span.textContent = mmss(reste);
+    var it = setInterval(function(){
+      reste -= 1;
+      span.textContent = mmss(reste);
+      if (reste <= 0) {
+        clearInterval(it);
+        Object.keys(timers).forEach(function(z){ clearInterval(timers[z]); });
+        ['cours','evaluation','revision','exercices'].forEach(verrouiller);
+      }
+    }, 1000);
+  }
+
+  // Dissuasion simple (lecture seule) : pas de menu contextuel ni de sélection sur l'aperçu.
+  function lectureSeule(){
+    var main = $('essai');
+    main.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    main.addEventListener('copy', function(e){ e.preventDefault(); });
+    main.style.userSelect = 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    if (!INVIT) { montrerErreur('Invitation d\'essai manquante.'); return; }
+    fetch('/api/essai', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ invitation: INVIT }) })
+      .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
+      .then(function(res){
+        if (!res.ok || !res.j.ok) { montrerErreur((res.j && res.j.erreur) || 'Essai non autorisé.'); return; }
+        $('essai').hidden = false;
+        lectureSeule();
+        var lim = res.j.limites || { cours:300, evaluation:90, revision:90, exercices:120 };
+        lancerGlobal(res.j.dureeGlobaleMin || 15);
+        lancerZone('cours', lim.cours);
+        lancerZone('evaluation', lim.evaluation);
+        lancerZone('revision', lim.revision);
+        lancerZone('exercices', lim.exercices);
+      })
+      .catch(function(){ montrerErreur('Réseau indisponible, réessayez.'); });
+  });
+})();
