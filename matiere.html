@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <title>Mémento — Matière</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
@@ -12,7 +13,7 @@
 <link rel="stylesheet" href="assets/espace.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
-<script>document.documentElement.setAttribute('data-theme',(function(){try{return localStorage.getItem('memento-theme')||'clair'}catch(e){return 'clair'}})());</script>
+<script src="assets/js/theme-boot.js"></script>
 </head>
 <body>
 <header class="app">
@@ -39,10 +40,6 @@
     <p id="intro">Le contenu détaillé de cette matière (cours en deux couches, évaluations, révisions et exercices corrigés) sera disponible très prochainement.</p>
     <p class="aide">Votre accès à cette matière est bien actif.</p>
   </section>
-  <section class="panel" id="bloc-ressources" hidden>
-    <h2 style="margin-top:0">Documents &amp; ressources</h2>
-    <div class="ressources" id="ressources"></div>
-  </section>
   <div id="cours-mount" class="cours"></div>
 </main>
 
@@ -59,7 +56,6 @@
 <script src="assets/app-theme.js"></script>
 <script src="assets/cours-reader.js"></script>
 <script src="assets/cours-thermo.js"></script>
-<script src="assets/cours-proba.js"></script>
 <script src="assets/matiere.js"></script>
 </body>
 </html>
