@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mémento — Accès</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/themes.css">
+<link rel="stylesheet" href="assets/base.css">
+<script src="assets/js/theme-boot.js"></script>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
+      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M44 6h8v14l-4-3-4 3z" fill="var(--sur-accent,#fff)" opacity=".85"></path>
+    </svg>
+    <span>Mémento</span>
+  </div>
+  <span class="spacer"></span>
+  <a class="btn mini ghost" href="index.html" style="text-decoration:none">← Accueil</a>
+  <select class="theme" aria-label="Thème">
+    <option value="clair">Clair</option><option value="sepia">Sépia</option>
+    <option value="gris">Gris</option><option value="sombre">Sombre</option>
+    <option value="noir">Noir</option><option value="bleu-nuit">Bleu nuit</option>
+    <option value="vert-foret">Vert forêt</option><option value="violet">Violet</option>
+  </select>
+</header>
+
+<div class="tabs" role="tablist">
+  <button class="tab" id="t-con" role="tab" aria-selected="true" aria-controls="p-con">Se connecter</button>
+  <button class="tab" id="t-dem" role="tab" aria-selected="false" aria-controls="p-dem">Demande d'accès</button>
+</div>
+
+<div class="wrap">
+  <section class="panel" id="p-con" role="tabpanel" aria-labelledby="t-con">
+    <h2 style="margin-top:0">Première connexion</h2>
+    <p class="aide">À n'utiliser qu'une seule fois, après avoir reçu votre lien d'activation par email.</p>
+    <form id="f-con" novalidate>
+      <label for="c-nom">Nom</label>
+      <input id="c-nom" name="nom" autocomplete="name" placeholder="Votre nom">
+      <label for="c-mail">Email</label>
+      <input id="c-mail" name="email" type="email" autocomplete="email" placeholder="vous@exemple.com">
+      <label for="c-cle">Clé d'activation</label>
+      <input id="c-cle" name="cle" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" maxlength="23" style="letter-spacing:.08em;text-transform:uppercase">
+      <div class="err" id="c-err"></div>
+      <button class="btn" type="submit">Activer mon accès</button>
+    </form>
+    <div class="note">Déjà activé ? Ouvrez simplement votre <b>lien personnel</b> reçu par email : il vous mène directement à votre espace, sans vous reconnecter ici. Gardez ce lien précieusement.</div>
+  </section>
+
+  <section class="panel" id="p-dem" role="tabpanel" aria-labelledby="t-dem" hidden>
+    <h2 style="margin-top:0">Demander un accès</h2>
+    <p>Pas encore d'accès ? Envoyez une demande. Après validation, vous recevrez par email un lien d'activation puis votre lien personnel.</p>
+    <a class="btn" href="demande.html" style="display:block;text-align:center;text-decoration:none">Aller à la page de demande</a>
+  </section>
+</div>
+
+<section class="home-sec steps-sec">
+  <h2 class="sec-title">Comment ça marche</h2>
+  <div class="steps">
+    <div class="step"><span class="step-n">1</span><h3>Demande d'accès</h3><p>Envoie une demande depuis la page dédiée. Elle est examinée manuellement.</p></div>
+    <div class="step"><span class="step-n">2</span><h3>Activation</h3><p>Après validation, tu reçois par email une clé d'activation à usage unique.</p></div>
+    <div class="step"><span class="step-n">3</span><h3>Accès</h3><p>Tu obtiens ton <b>lien personnel</b> : il ouvre directement ton espace, à garder précieusement.</p></div>
+  </div>
+</section>
+
+<div class="overlay" id="ov">
+  <div class="boite">
+    <svg class="ok" viewBox="0 0 90 90"><circle cx="45" cy="45" r="38"></circle><path d="M28 46l12 12 23-26"></path></svg>
+    <h2>Accès activé</h2>
+    <div class="cit" id="cit"></div>
+    <p style="color:var(--texte-doux);font-size:14px;margin:0 0 6px">Votre <b>lien personnel</b> vient de vous être envoyé par email. Ouvrez-le pour accéder à votre espace.</p>
+    <button class="btn" id="ov-ok">Fermer</button>
+  </div>
+</div>
+
+<footer class="app">Mémento — accès réservé.</footer>
+
+<script src="assets/app-theme.js"></script>
+<script src="assets/access.js"></script>
+</body>
+</html>
