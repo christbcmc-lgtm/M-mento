@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mémento — Essai gratuit</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/themes.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/espace.css">
+<script src="assets/js/theme-boot.js"></script>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
+      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span>Mémento — Essai</span>
+  </div>
+  <span class="spacer"></span>
+  <select class="theme" aria-label="Thème">
+    <option value="clair">Clair</option><option value="sepia">Sépia</option>
+    <option value="gris">Gris</option><option value="sombre">Sombre</option>
+    <option value="noir">Noir</option><option value="bleu-nuit">Bleu nuit</option>
+    <option value="vert-foret">Vert forêt</option><option value="violet">Violet</option>
+  </select>
+</header>
+
+<div class="hero">
+  <i class="blob b1"></i><i class="blob b2"></i>
+  <h1>Aperçu de Mémento</h1>
+  <p>Découvrez l'expérience en lecture seule. Chaque zone reste visible un court instant à titre de démonstration.</p>
+</div>
+
+<main class="wrap large" id="essai" hidden>
+  <div class="bandeau">Temps global restant : <span class="minuterie" id="glob">–</span> — aperçu en lecture seule, sans téléchargement.</div>
+
+  <section class="panel zone-essai" data-zone="cours">
+    <div class="voile"><div>⏱️ Aperçu terminé</div><div class="aide">Demandez un accès pour lire l'intégralité.</div></div>
+    <h2 style="margin-top:0">Cours <span class="minuterie" data-timer="cours" style="font-size:14px"></span></h2>
+    <p>Les cours Mémento sont présentés en deux couches : une synthèse claire, puis le détail déplié à la demande, avec formules (rendu mathématique) et schémas.</p>
+    <p class="aide">Exemple : définition, propriétés, démonstration guidée, exemple résolu.</p>
+  </section>
+
+  <section class="panel zone-essai" data-zone="evaluation">
+    <div class="voile"><div>⏱️ Aperçu terminé</div><div class="aide">Demandez un accès pour vous auto-évaluer.</div></div>
+    <h2 style="margin-top:0">Évaluation <span class="minuterie" data-timer="evaluation" style="font-size:14px"></span></h2>
+    <p>Des questions courtes pour vérifier votre compréhension, avec correction masquée jusqu'à votre réponse.</p>
+  </section>
+
+  <section class="panel zone-essai" data-zone="revision">
+    <div class="voile"><div>⏱️ Aperçu terminé</div><div class="aide">Demandez un accès pour réviser sans limite.</div></div>
+    <h2 style="margin-top:0">Révision <span class="minuterie" data-timer="revision" style="font-size:14px"></span></h2>
+    <p>Fiches de révision condensées : l'essentiel à retenir, points clés et pièges fréquents.</p>
+  </section>
+
+  <section class="panel zone-essai" data-zone="exercices">
+    <div class="voile"><div>⏱️ Aperçu terminé</div><div class="aide">Demandez un accès pour tous les exercices corrigés.</div></div>
+    <h2 style="margin-top:0">Exercices <span class="minuterie" data-timer="exercices" style="font-size:14px"></span></h2>
+    <p>Exercices progressifs avec corrections détaillées, réponses longues repliées par défaut.</p>
+  </section>
+
+  <section class="panel" style="text-align:center">
+    <h2 style="margin-top:0">Envie d'aller plus loin ?</h2>
+    <p>Demandez un accès complet — cours, évaluations, révisions et exercices, sans limite de temps.</p>
+    <a class="btn" href="demande.html" style="display:inline-block;width:auto;text-decoration:none">Demander un accès</a>
+  </section>
+</main>
+
+<div class="wrap" id="bloc-erreur" hidden>
+  <section class="panel">
+    <h2 style="margin-top:0">Essai indisponible</h2>
+    <p id="txt-erreur">Cette invitation d'essai est invalide ou expirée.</p>
+    <a class="btn" href="demande.html" style="display:block;text-align:center;text-decoration:none">Demander un accès</a>
+  </section>
+</div>
+
+<footer class="app">Mémento — aperçu en lecture seule.</footer>
+
+<script src="assets/app-theme.js"></script>
+<script src="assets/essai.js"></script>
+</body>
+</html>

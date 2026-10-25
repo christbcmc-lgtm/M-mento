@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mémento — Matière</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/themes.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/espace.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="assets/js/theme-boot.js"></script>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
+      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span>Mémento</span>
+  </div>
+  <span class="spacer"></span>
+  <a class="btn mini ghost" id="retour" href="#" style="text-decoration:none">← Mon espace</a>
+  <select class="theme" aria-label="Thème">
+    <option value="clair">Clair</option><option value="sepia">Sépia</option>
+    <option value="gris">Gris</option><option value="sombre">Sombre</option>
+    <option value="noir">Noir</option><option value="bleu-nuit">Bleu nuit</option>
+    <option value="vert-foret">Vert forêt</option><option value="violet">Violet</option>
+  </select>
+</header>
+
+<main class="wrap large" id="contenu" hidden>
+  <section class="panel" id="placeholder-matiere">
+    <h2 style="margin-top:0" id="titre">Matière</h2>
+    <p id="intro">Le contenu détaillé de cette matière (cours en deux couches, évaluations, révisions et exercices corrigés) sera disponible très prochainement.</p>
+    <p class="aide">Votre accès à cette matière est bien actif.</p>
+  </section>
+  <div id="cours-mount" class="cours"></div>
+</main>
+
+<div class="wrap" id="bloc-erreur" hidden>
+  <section class="panel">
+    <h2 style="margin-top:0">Accès refusé</h2>
+    <p id="txt-erreur">Ce lien n'est pas valide pour cette matière.</p>
+    <a class="btn" href="index.html" style="display:block;text-align:center;text-decoration:none">Retour à l'accueil</a>
+  </section>
+</div>
+
+<footer class="app">Mémento — espace personnel.</footer>
+
+<script src="assets/app-theme.js"></script>
+<script src="assets/cours-reader.js"></script>
+<script src="assets/cours-thermo.js"></script>
+<script src="assets/matiere.js"></script>
+</body>
+</html>
