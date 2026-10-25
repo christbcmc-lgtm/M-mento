@@ -10,6 +10,8 @@
 <link rel="stylesheet" href="assets/themes.css">
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/espace.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
 <script>document.documentElement.setAttribute('data-theme',(function(){try{return localStorage.getItem('memento-theme')||'clair'}catch(e){return 'clair'}})());</script>
 </head>
 <body>
@@ -32,11 +34,12 @@
 </header>
 
 <main class="wrap large" id="contenu" hidden>
-  <section class="panel">
+  <section class="panel" id="placeholder-matiere">
     <h2 style="margin-top:0" id="titre">Matière</h2>
     <p id="intro">Le contenu détaillé de cette matière (cours en deux couches, évaluations, révisions et exercices corrigés) sera disponible très prochainement.</p>
     <p class="aide">Votre accès à cette matière est bien actif.</p>
   </section>
+  <div id="cours-mount" class="cours"></div>
 </main>
 
 <div class="wrap" id="bloc-erreur" hidden>
@@ -50,6 +53,8 @@
 <footer class="app">Mémento — espace personnel.</footer>
 
 <script src="assets/app-theme.js"></script>
+<script src="assets/cours-reader.js"></script>
+<script src="assets/cours-thermo.js"></script>
 <script src="assets/matiere.js"></script>
 </body>
 </html>
