@@ -27,9 +27,65 @@ module.exports = async (req, res) => {
     const site = (process.env.SITE_URL || '').replace(/\/$/, '');
     const now = new Date();
 
+    if (action === 'list_matieres') {
+      const s = await base.collection('matieres').orderBy('ordre').get();
+      return send(res, 200, { ok: true, matieres: s.docs.map((d) => ({ id: d.id, nom: (d.data().nom || d.id), ordre: d.data().ordre || 0 })) });
+    }
+
+    if (action === 'stats') {
+      // Tableau de bord : compteurs synthetiques pour l'administrateur.
+      const [dem, mem, msg] = await Promise.all([
+        base.collection('demandes').get(),
+        base.collection('membres').get(),
+        base.collection('messages').get()
+      ]);
+      let demEnAttente = 0;
+      dem.forEach((d) => { const st = d.data().statut; if (!st || st === 'nouvelle' || st === 'ouverte') demEnAttente++; });
+      let memActifs = 0;
+      mem.forEach((d) => { if (d.data().statut === 'actif') memActifs++; });
+      let msgOuverts = 0;
+      msg.forEach((d) => { if (d.data().statut === 'ouvert') msgOuverts++; });
+      return send(res, 200, { ok: true, stats: {
+        demandes: dem.size, demandesEnAttente: demEnAttente,
+        membres: mem.size, membresActifs: memActifs,
+        messages: msg.size, messagesOuverts: msgOuverts
+      } });
+    }
+
+    if (action === 'list_membres') {
+      const s = await base.collection('membres').orderBy('majLe', 'desc').limit(200).get();
+      return send(res, 200, { ok: true, membres: s.docs.map((d) => {
+        const x = d.data();
+        const abo = x.matieres || {};
+        return {
+          id: d.id, prenom: x.prenom || '', nom: x.nom || '', email: x.email || '',
+          statut: x.statut || '', numero: x.numero || '',
+          compteurAcces: x.compteurAcces || 0, majLe: x.majLe || null,
+          matieres: Object.keys(abo).filter((k) => abo[k] && abo[k].abonne)
+        };
+      }) });
+    }
+
     if (action === 'list_demandes') {
       const s = await base.collection('demandes').orderBy('creeLe', 'desc').limit(100).get();
       return send(res, 200, { ok: true, demandes: s.docs.map((d) => Object.assign({ id: d.id }, d.data())) });
+    }
+
+    if (action === 'rejeter') {
+      // Refus d'une demande : marque la demande et previent le demandeur par email.
+      const id = clean(b.demandeId, 60);
+      const email = clean(b.email, 160).toLowerCase();
+      const motif = clean(b.motif, 2000);
+      if (id) await base.collection('demandes').doc(id).set({ statut: 'rejetee', rejeteLe: now, motif }, { merge: true }).catch(() => {});
+      if (validEmail(email)) {
+        await sendMail(email, 'Suite a votre demande — Memento',
+          wrap('Demande non retenue',
+            'Bonjour,<br>Votre demande d\'acces a Memento n\'a pas pu etre acceptee pour le moment.' +
+            (motif ? '<br><br><b>Motif :</b> ' + motif : '') +
+            '<br><br>Vous pouvez renouveler votre demande ou nous ecrire si vous pensez qu\'il s\'agit d\'une erreur.',
+            { url: site + '/', texte: 'Revenir sur Memento' })).catch(() => {});
+      }
+      return send(res, 200, { ok: true });
     }
 
     if (action === 'list_messages') {

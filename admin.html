@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mémento — Administration</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/themes.css">
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/espace.css">
@@ -47,6 +50,20 @@
 
 <!-- Console admin -->
 <main class="wrap large" id="bloc-admin" hidden>
+
+  <!-- Tableau de bord : récapitulatif -->
+  <section class="panel" style="margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <h2 style="margin:0;flex:1">Tableau de bord</h2>
+      <button class="btn mini ghost" id="rafr-tout">Tout rafraîchir</button>
+    </div>
+    <div class="cartes-stats" id="stats">
+      <div class="stat"><span class="n" id="s-dem">—</span><span class="l">Demandes</span><span class="sub" id="s-dem-a"></span></div>
+      <div class="stat"><span class="n" id="s-mem">—</span><span class="l">Membres</span><span class="sub" id="s-mem-a"></span></div>
+      <div class="stat"><span class="n" id="s-msg">—</span><span class="l">Messages</span><span class="sub" id="s-msg-a"></span></div>
+    </div>
+  </section>
+
   <div class="admin-cols">
     <section class="panel">
       <h2 style="margin-top:0">Demandes d'accès</h2>
@@ -62,24 +79,32 @@
 
   <section class="panel" style="margin-top:18px">
     <h2 style="margin-top:0">Accorder / activer un accès</h2>
+    <p class="aide">Cliquez « Préparer l'activation » sur une demande : les coordonnées se remplissent toutes seules. Il ne vous reste qu'à <b>cocher</b> les matières puis valider — rien à taper.</p>
     <div class="row">
       <div><label for="g-prenom">Prénom</label><input id="g-prenom"></div>
       <div><label for="g-nom">Nom</label><input id="g-nom"></div>
     </div>
     <div class="row">
       <div><label for="g-mail">Email</label><input id="g-mail" type="email"></div>
-      <div><label for="g-num">Numéro (preuve d'identité)</label><input id="g-num"></div>
+      <div><label for="g-num">Numéro (facultatif — preuve d'identité)</label><input id="g-num"></div>
     </div>
-    <label>Matières incluses</label>
-    <div class="chips" id="g-chips"></div>
-    <label for="g-extra">Ajouter des matières (ids séparés par des virgules)</label>
-    <input id="g-extra" placeholder="thermo, probas-stats, info">
+    <label>Matières à inclure <span class="aide" style="font-weight:400">(cochez — multi-sélection)</span></label>
+    <div class="chips" id="g-chips"><span class="aide">Chargement des matières…</span></div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:600">
-      <input type="checkbox" id="g-code" style="width:auto"> Générer un code par matière
+      <input type="checkbox" id="g-code" style="width:auto" checked> Générer automatiquement un code par matière
     </label>
     <input type="hidden" id="g-demande">
     <div class="err" id="g-err"></div>
-    <button class="btn" id="g-ok">Envoyer la clé d'activation</button>
+    <button class="btn" id="g-ok">Accorder l'accès et envoyer la clé</button>
+  </section>
+
+  <!-- Membres -->
+  <section class="panel" style="margin-top:18px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <h2 style="margin:0;flex:1">Membres</h2>
+      <button class="btn mini ghost" id="rafr-mem">Rafraîchir</button>
+    </div>
+    <div id="liste-mem" style="margin-top:12px"></div>
   </section>
 
   <section class="panel" style="margin-top:18px">
@@ -88,6 +113,10 @@
     <input id="e-mail" type="email">
     <div class="err" id="e-err"></div>
     <button class="btn" id="e-ok">Envoyer l'invitation d'essai</button>
+    <div id="e-lien" hidden style="margin-top:12px">
+      <label>Lien d'essai (vous pouvez le copier et l'envoyer vous-même) :</label>
+      <div class="copie-lien"><input id="e-lien-url" readonly><button class="btn mini" id="e-lien-copy" type="button">Copier</button></div>
+    </div>
   </section>
 </main>
 

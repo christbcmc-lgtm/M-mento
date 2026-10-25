@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mémento — Accès</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/themes.css">
 <link rel="stylesheet" href="assets/base.css">
 <script>document.documentElement.setAttribute('data-theme',(function(){try{return localStorage.getItem('memento-theme')||'clair'}catch(e){return 'clair'}})());</script>
@@ -27,12 +30,107 @@
   </select>
 </header>
 
-<div class="hero">
-  <i class="blob b1"></i><i class="blob b2"></i>
-  <h1>Tes cours, bien rangés.</h1>
-  <p>Espace d'accès protégé pour réviser avec les cours, résumés, exercices et auto-évaluations.</p>
-</div>
+<section class="home-hero">
+  <div class="hh-grid">
+    <div class="hh-text">
+      <span class="eyebrow">Espace d'étude personnel</span>
+      <h1>Tes cours, bien rangés.</h1>
+      <p>Un espace d'accès protégé pour réviser sérieusement : cours détaillés, fiches de révision, exercices corrigés et auto-évaluations. Clair, soigné, sans distraction.</p>
+      <div class="hh-cta">
+        <a class="btn hh-btn" href="#acces">Accéder à mon espace</a>
+        <a class="btn ghost hh-btn" href="essai.html">Essayer gratuitement</a>
+      </div>
+      <div class="hh-badges">
+        <span>✔ Lien personnel sécurisé</span>
+        <span>✔ Lecture confortable</span>
+        <span>✔ 8 thèmes d'affichage</span>
+      </div>
+    </div>
 
+    <div class="hh-art" aria-hidden="true">
+      <svg viewBox="0 0 360 320" class="scene" role="img">
+        <ellipse class="il-pulse" cx="180" cy="180" rx="150" ry="150" fill="var(--accent)" opacity=".12"></ellipse>
+        <circle cx="180" cy="170" r="118" fill="var(--surface)" opacity=".55"></circle>
+
+        <!-- symboles flottants -->
+        <g class="il-float">
+          <rect x="44" y="58" width="52" height="52" rx="14" fill="var(--accent)" opacity=".16"></rect>
+          <text x="70" y="94" text-anchor="middle" font-size="30" font-weight="700" fill="var(--accent)">π</text>
+        </g>
+        <g class="il-float2">
+          <rect x="270" y="46" width="52" height="52" rx="14" fill="var(--accent)" opacity=".16"></rect>
+          <text x="296" y="82" text-anchor="middle" font-size="28" font-weight="700" fill="var(--accent)">Σ</text>
+        </g>
+        <g class="il-float3">
+          <rect x="286" y="196" width="48" height="48" rx="13" fill="var(--accent)" opacity=".16"></rect>
+          <text x="310" y="229" text-anchor="middle" font-size="26" font-weight="700" fill="var(--accent)">√</text>
+        </g>
+        <g class="il-float2">
+          <circle cx="58" cy="214" r="24" fill="var(--accent)" opacity=".16"></circle>
+          <path d="M58 200a10 10 0 00-5 19v4h10v-4a10 10 0 00-5-19z" fill="var(--accent)"></path>
+          <rect x="54" y="224" width="8" height="3" rx="1.5" fill="var(--accent)"></rect>
+        </g>
+
+        <!-- bureau -->
+        <rect x="96" y="256" width="168" height="12" rx="6" fill="var(--accent)" opacity=".85"></rect>
+        <rect x="110" y="268" width="10" height="34" rx="4" fill="var(--accent)" opacity=".55"></rect>
+        <rect x="240" y="268" width="10" height="34" rx="4" fill="var(--accent)" opacity=".55"></rect>
+
+        <!-- personne qui lit (léger balancement) -->
+        <g class="il-bob">
+          <path d="M150 256c0-28 10-52 30-52s30 24 30 52z" fill="var(--accent)"></path>
+          <circle cx="180" cy="176" r="26" fill="var(--texte)"></circle>
+          <path d="M156 172a24 24 0 0148 0c0-16-10-26-24-26s-24 10-24 26z" fill="var(--accent)"></path>
+        </g>
+        <!-- bras + livre ouvert -->
+        <g class="il-book">
+          <path d="M150 232l-18 14M210 232l18 14" stroke="var(--accent)" stroke-width="12" stroke-linecap="round"></path>
+          <path d="M126 244l54-10v44l-54 8z" fill="var(--surface)" stroke="var(--texte)" stroke-width="3"></path>
+          <path d="M234 244l-54-10v44l54 8z" fill="var(--surface)" stroke="var(--texte)" stroke-width="3"></path>
+          <path class="il-line" d="M138 252l32-6M138 262l30-5M196 246l30 6M196 256l28 5" stroke="var(--texte-doux)" stroke-width="2.4" stroke-linecap="round"></path>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="home-sec">
+  <h2 class="sec-title">Ce que tu trouves dans Mémento</h2>
+  <p class="sec-sub">Quatre façons de travailler le même chapitre, de la compréhension à la maîtrise.</p>
+  <div class="cards">
+    <article class="card">
+      <div class="card-ic">📘</div>
+      <h3>Cours en deux couches</h3>
+      <p>L'essentiel d'abord, puis le détail complet avec formules (KaTeX) et schémas clairs.</p>
+    </article>
+    <article class="card">
+      <div class="card-ic">📋</div>
+      <h3>Fiches de révision</h3>
+      <p>Des résumés ramassés pour revoir vite, la veille d'un contrôle ou d'un examen.</p>
+    </article>
+    <article class="card">
+      <div class="card-ic">✏️</div>
+      <h3>Exercices corrigés</h3>
+      <p>Des énoncés accompagnés de corrections détaillées, étape par étape.</p>
+    </article>
+    <article class="card">
+      <div class="card-ic">✅</div>
+      <h3>Auto-évaluations</h3>
+      <p>Teste ta compréhension et repère les points à retravailler avant qu'il soit trop tard.</p>
+    </article>
+  </div>
+</section>
+
+<section class="home-sec steps-sec">
+  <h2 class="sec-title">Comment ça marche</h2>
+  <div class="steps">
+    <div class="step"><span class="step-n">1</span><h3>Demande d'accès</h3><p>Envoie une demande depuis la page dédiée. Elle est examinée manuellement.</p></div>
+    <div class="step"><span class="step-n">2</span><h3>Activation</h3><p>Après validation, tu reçois par email une clé d'activation à usage unique.</p></div>
+    <div class="step"><span class="step-n">3</span><h3>Accès</h3><p>Tu obtiens ton <b>lien personnel</b> : il ouvre directement ton espace, à garder précieusement.</p></div>
+  </div>
+</section>
+
+<a id="acces"></a>
 <div class="tabs" role="tablist">
   <button class="tab" id="t-con" role="tab" aria-selected="true" aria-controls="p-con">Se connecter</button>
   <button class="tab" id="t-dem" role="tab" aria-selected="false" aria-controls="p-dem">Demande d'accès</button>

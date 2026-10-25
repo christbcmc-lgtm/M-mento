@@ -5,11 +5,7 @@
   function esc(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
   function dateFr(v){ try{ var d=new Date(v&&v._seconds?v._seconds*1000:v); return isNaN(d)?'':d.toLocaleString('fr-FR'); }catch(e){ return ''; } }
 
-  var MATIERES_DEF = [
-    { id:'thermo', nom:'Thermodynamique' },
-    { id:'probas-stats', nom:'Probabilités & Statistiques' },
-    { id:'info', nom:'Informatique' }
-  ];
+  var MATIERES_DEF = [];
   var selection = {};
   var filCourant = null;
 
@@ -29,13 +25,15 @@
     }).then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); });
   }
 
-  /* ---------- Chips matières ---------- */
+  /* ---------- Chips matières (chargées depuis le catalogue réel) ---------- */
   function rendreChips(){
     var box = $('g-chips'); box.innerHTML = '';
+    if (!MATIERES_DEF.length) { box.innerHTML = '<span class="aide">Aucune matière déclarée dans le catalogue.</span>'; return; }
     MATIERES_DEF.forEach(function(m){
       var c = document.createElement('span');
       c.className = 'chip' + (selection[m.id] ? ' on' : '');
       c.textContent = m.nom;
+      c.setAttribute('role','button'); c.tabIndex = 0;
       c.addEventListener('click', function(){
         selection[m.id] = !selection[m.id];
         c.classList.toggle('on');
@@ -43,11 +41,44 @@
       box.appendChild(c);
     });
   }
+  function chargerMatieres(){
+    return appel('list_matieres').then(function(res){
+      if (res.ok && res.j.ok) { MATIERES_DEF = res.j.matieres || []; }
+      rendreChips();
+    }).catch(function(){ rendreChips(); });
+  }
   function matieresChoisies(){
-    var ids = Object.keys(selection).filter(function(k){ return selection[k]; });
-    var extra = ($('g-extra').value || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
-    extra.forEach(function(x){ if (ids.indexOf(x) === -1) ids.push(x); });
-    return ids;
+    return Object.keys(selection).filter(function(k){ return selection[k]; });
+  }
+
+  /* ---------- Tableau de bord ---------- */
+  function chargerStats(){
+    appel('stats').then(function(res){
+      if (!res.ok || !res.j.ok) return;
+      var s = res.j.stats;
+      $('s-dem').textContent = s.demandes; $('s-dem-a').textContent = s.demandesEnAttente + ' en attente';
+      $('s-mem').textContent = s.membres; $('s-mem-a').textContent = s.membresActifs + ' actifs';
+      $('s-msg').textContent = s.messages; $('s-msg-a').textContent = s.messagesOuverts + ' ouverts';
+    });
+  }
+
+  /* ---------- Membres ---------- */
+  function nomMatiere(id){ for (var i=0;i<MATIERES_DEF.length;i++){ if (MATIERES_DEF[i].id===id) return MATIERES_DEF[i].nom; } return id; }
+  function rendreMembres(list){
+    var box = $('liste-mem'); box.innerHTML = '';
+    if (!list || !list.length) { box.innerHTML = '<div class="vide">Aucun membre.</div>'; return; }
+    list.forEach(function(m){
+      var el = document.createElement('div'); el.className = 'ligne';
+      var mats = (m.matieres||[]).map(nomMatiere).join(', ') || '—';
+      var badge = m.statut === 'actif' ? '✔ actif' : (m.statut === 'cle_emise' ? '⏳ clé émise' : esc(m.statut));
+      el.innerHTML = '<b>' + esc((m.prenom||'') + ' ' + (m.nom||'')) + '</b>' +
+        '<div class="sous">' + esc(m.email||'') + ' • ' + badge + ' • ' + (m.compteurAcces||0) + ' accès</div>' +
+        '<div class="sous">Matières : ' + esc(mats) + '</div>';
+      box.appendChild(el);
+    });
+  }
+  function chargerMembres(){
+    appel('list_membres').then(function(res){ if (res.ok && res.j.ok) rendreMembres(res.j.membres); });
   }
 
   /* ---------- Demandes ---------- */
@@ -57,7 +88,7 @@
     list.forEach(function(d){
       var el = document.createElement('div');
       el.className = 'ligne';
-      var statut = d.statut === 'traitee' ? ' • traitée' : '';
+      var statut = d.statut === 'traitee' ? ' • traitée' : (d.statut === 'rejetee' ? ' • rejetée' : '');
       el.innerHTML = '<b>' + esc((d.prenom||'') + ' ' + (d.nom||'')) + '</b>' +
         '<div class="sous">' + esc(d.email||'') + ' • ' + dateFr(d.creeLe) + statut + '</div>' +
         (d.message ? '<div class="sous">« ' + esc(d.message) + ' »</div>' : '');
@@ -68,7 +99,19 @@
         $('g-mail').value = d.email || ''; $('g-demande').value = d.id || '';
         $('g-ok').scrollIntoView({ behavior:'smooth', block:'center' });
       });
-      act.appendChild(b); el.appendChild(act); box.appendChild(el);
+      act.appendChild(b);
+      var r = document.createElement('button'); r.className = 'btn mini ghost'; r.textContent = 'Rejeter';
+      r.addEventListener('click', function(){
+        var motif = window.prompt('Motif du refus (facultatif, visible par le demandeur) :', '') ;
+        if (motif === null) return;
+        r.disabled = true; r.textContent = '…';
+        appel('rejeter', { demandeId: d.id, email: d.email, motif: motif }).then(function(res){
+          if (res.ok && res.j.ok) { chargerDemandes(); chargerStats(); }
+          else { r.disabled = false; r.textContent = 'Rejeter'; }
+        }).catch(function(){ r.disabled = false; r.textContent = 'Rejeter'; });
+      });
+      act.appendChild(r);
+      el.appendChild(act); box.appendChild(el);
     });
   }
   function chargerDemandes(){
@@ -127,7 +170,7 @@
     var email = $('g-mail').value.trim();
     if (!email) { $('g-err').textContent = 'Email requis.'; return; }
     var mats = matieresChoisies();
-    if (!mats.length) { $('g-err').textContent = 'Sélectionnez au moins une matière.'; return; }
+    if (!mats.length) { $('g-err').textContent = 'Cochez au moins une matière.'; return; }
     $('g-err').textContent = '';
     appel('approuver', {
       prenom: $('g-prenom').value.trim(), nom: $('g-nom').value.trim(),
@@ -138,8 +181,8 @@
       if (!res.ok || !res.j.ok) { $('g-err').textContent = (res.j && res.j.erreur) || 'Opération impossible.'; return; }
       $('g-err').textContent = 'Clé d\'activation envoyée ✔';
       selection = {}; rendreChips();
-      $('g-prenom').value=''; $('g-nom').value=''; $('g-mail').value=''; $('g-num').value=''; $('g-extra').value=''; $('g-demande').value=''; $('g-code').checked=false;
-      chargerDemandes();
+      $('g-prenom').value=''; $('g-nom').value=''; $('g-mail').value=''; $('g-num').value=''; $('g-demande').value=''; $('g-code').checked=true;
+      chargerDemandes(); chargerMembres(); chargerStats();
     }).catch(function(){ $('g-err').textContent = 'Réseau indisponible.'; });
   }
 
@@ -147,11 +190,19 @@
   function inviterEssai(){
     var email = $('e-mail').value.trim();
     if (!email) { $('e-err').textContent = 'Email requis.'; return; }
-    $('e-err').textContent = '';
+    $('e-err').textContent = ''; $('e-lien').hidden = true;
     appel('inviter_essai', { email: email }).then(function(res){
       if (!res.ok || !res.j.ok) { $('e-err').textContent = (res.j && res.j.erreur) || 'Envoi impossible.'; return; }
-      $('e-err').textContent = 'Invitation envoyée ✔'; $('e-mail').value = '';
+      $('e-err').textContent = 'Invitation envoyée ✔';
+      if (res.j.lien) { $('e-lien-url').value = res.j.lien; $('e-lien').hidden = false; }
+      $('e-mail').value = '';
     }).catch(function(){ $('e-err').textContent = 'Réseau indisponible.'; });
+  }
+  function copier(input, bouton){
+    try { input.select(); input.setSelectionRange(0, 99999); } catch(e){}
+    var done = function(){ var t=bouton.textContent; bouton.textContent='Copié ✔'; setTimeout(function(){ bouton.textContent=t; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(input.value).then(done, function(){ try{document.execCommand('copy');}catch(e){} done(); }); }
+    else { try{document.execCommand('copy');}catch(e){} done(); }
   }
 
   /* ---------- Auth ---------- */
@@ -168,8 +219,11 @@
     $('deco').addEventListener('click', function(){ auth.signOut(); });
     $('rafr-dem').addEventListener('click', chargerDemandes);
     $('rafr-msg').addEventListener('click', chargerMessages);
+    $('rafr-mem').addEventListener('click', chargerMembres);
+    $('rafr-tout').addEventListener('click', function(){ chargerStats(); chargerDemandes(); chargerMessages(); chargerMembres(); });
     $('g-ok').addEventListener('click', accorder);
     $('e-ok').addEventListener('click', inviterEssai);
+    $('e-lien-copy').addEventListener('click', function(){ copier($('e-lien-url'), this); });
     $('rep-ok').addEventListener('click', envoyerReponse);
     $('rep-fermer').addEventListener('click', function(){ $('ov-rep').classList.remove('on'); });
 
@@ -177,7 +231,8 @@
       if (user) {
         $('bloc-login').hidden = true; $('bloc-admin').hidden = false;
         $('deco').hidden = false; $('qui').textContent = user.email || '';
-        chargerDemandes(); chargerMessages();
+        chargerMatieres().then(function(){ chargerMembres(); });
+        chargerStats(); chargerDemandes(); chargerMessages();
       } else {
         $('bloc-login').hidden = false; $('bloc-admin').hidden = true;
         $('deco').hidden = true; $('qui').textContent = '';
