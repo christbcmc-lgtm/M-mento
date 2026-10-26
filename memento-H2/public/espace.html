@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mémento — Mon espace</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/themes.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/espace.css">
+<script src="assets/js/theme-boot.js"></script>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
+      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M44 6h8v14l-4-3-4 3z" fill="var(--sur-accent,#fff)" opacity=".85"></path>
+    </svg>
+    <span>Mémento</span>
+  </div>
+  <span class="spacer"></span>
+  <span class="bonjour" id="bonjour"></span>
+  <button class="btn mini ghost" id="btn-verrou" type="button" hidden>Déverrouiller</button>
+  <button class="btn mini ghost" id="btn-deco" type="button">Se déconnecter</button>
+  <select class="theme" aria-label="Thème">
+    <option value="clair">Clair</option><option value="sepia">Sépia</option>
+    <option value="gris">Gris</option><option value="sombre">Sombre</option>
+    <option value="noir">Noir</option><option value="bleu-nuit">Bleu nuit</option>
+    <option value="vert-foret">Vert forêt</option><option value="violet">Violet</option>
+  </select>
+</header>
+
+<main class="wrap large" id="espace" hidden>
+  <section class="panel">
+    <h2 style="margin-top:0">Mes matières</h2>
+    <p class="aide" id="aide-seuil"></p>
+    <div class="grille" id="grille"></div>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin-top:0">Messagerie</h2>
+    <p class="aide">Écrivez à l'administrateur : questions, demande d'une matière, pièces reçues en réponse.</p>
+    <div class="fil" id="fil"></div>
+    <form id="f-msg" novalidate>
+      <label for="m-txt">Votre message</label>
+      <textarea id="m-txt" placeholder="Bonjour, …"></textarea>
+      <div class="err" id="m-err"></div>
+      <button class="btn" type="submit">Envoyer</button>
+    </form>
+  </section>
+</main>
+
+<div class="wrap" id="bloc-erreur" hidden>
+  <section class="panel">
+    <h2 style="margin-top:0">Lien non valide</h2>
+    <p id="txt-erreur">Ce lien personnel est invalide ou expiré.</p>
+    <a class="btn" href="index.html" style="display:block;text-align:center;text-decoration:none">Retour à l'accueil</a>
+  </section>
+</div>
+
+<!-- Modale : déverrouillage de l'appareil (code à usage renforcé, valable 12 h) -->
+<div class="overlay" id="ov-code">
+  <div class="boite" style="text-align:left">
+    <h2 style="margin:0 0 6px">Déverrouiller cet appareil</h2>
+    <p class="aide" style="margin:0 0 10px">Saisissez votre code personnel pour déverrouiller cet appareil pendant 12 heures.</p>
+    <label for="code-val">Code</label>
+    <input id="code-val" placeholder="Votre code" autocomplete="one-time-code" style="letter-spacing:.14em;text-transform:uppercase">
+    <div class="err" id="code-err"></div>
+    <button class="btn" id="code-ok">Valider</button>
+    <div id="reset-zone" hidden style="margin-top:12px;border-top:1px solid var(--bord,#ddd);padding-top:10px">
+      <p class="aide" style="margin:0 0 8px">Pour recevoir un nouveau code, indiquez l'email et le numéro de votre compte. Le code sera envoyé à l'adresse enregistrée.</p>
+      <label for="code-email">Email du compte</label>
+      <input id="code-email" type="email" placeholder="vous@exemple.com" autocomplete="email">
+      <label for="code-numero" style="margin-top:8px;display:block">Votre numéro</label>
+      <input id="code-numero" placeholder="Numéro communiqué à l'inscription" autocomplete="off">
+      <button class="btn" id="code-reset-ok" style="margin-top:10px">Envoyer</button>
+    </div>
+    <button class="btn ghost" id="code-reset" style="margin-top:10px">Code oublié ?</button>
+    <button class="btn ghost" id="code-fermer" style="margin-top:10px">Fermer</button>
+  </div>
+</div>
+
+<footer class="app">Mémento — espace personnel.</footer>
+
+<script src="assets/app-theme.js"></script>
+<script src="assets/espace.js"></script>
+</body>
+</html>

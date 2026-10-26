@@ -1,0 +1,7 @@
+{
+  "matieres": [
+    { "id": "thermo", "titre": "Thermodynamique" },
+    { "id": "proba", "titre": "Probabilités et statistiques" },
+    { "id": "info", "titre": "Informatique" }
+  ]
+}

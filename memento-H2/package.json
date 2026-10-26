@@ -1,0 +1,17 @@
+{
+  "name": "memento",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Memento - espace d'acces protege aux cours (Vercel + Firebase)",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "firebase-admin": "12.7.0",
+    "jsonwebtoken": "9.0.2",
+    "nodemailer": "6.9.15"
+  }
+}
