@@ -1,0 +1,8 @@
+{
+  "titre": "Aperçu — essai gratuit",
+  "lectureSeule": true,
+  "blocs": [
+    { "type": "para", "texte": "Ceci est un extrait de démonstration. L'essai gratuit donne un aperçu limité dans le temps, en lecture seule, sans téléchargement." },
+    { "type": "para", "texte": "Le contenu complet des matières est réservé aux membres et servi uniquement après contrôle d'accès côté serveur." }
+  ]
+}

@@ -27,7 +27,7 @@ function bloc(n) {
 }
 // Cle d'activation : XXXXX-XXXXX-XXXXX-XXXXX
 function nouvelleCle() { return [bloc(5), bloc(5), bloc(5), bloc(5)].join('-'); }
-// Code par matiere : 6 caracteres
-function nouveauCode() { return bloc(6); }
+// Code unique du membre : 8 caracteres (guide v2, deverrouillage 12 h)
+function nouveauCode() { return bloc(8); }
 
 module.exports = { hash, compare, nouvelleCle, nouveauCode };

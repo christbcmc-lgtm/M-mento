@@ -5,17 +5,29 @@ const { sendMail, wrap } = require('./_lib/mail');
 const { hash, nouvelleCle, nouveauCode } = require('./_lib/secret');
 const { signInviteEssai } = require('./_lib/token');
 const { readBody, send, methodGuard, validEmail, clean } = require('./_lib/http');
-const { fusionner } = require('./_lib/catalogue');
+const essaisLib = require('./_lib/essais');
+const inscLib = require('./_lib/inscription');
+const msgLib = require('./_lib/messagerie');
+
+// K1 (D12) : garde admin PURE et testable. L'accès admin exige un jeton dont
+// l'email est VÉRIFIÉ (email_verified === true) ET égal à ADMIN_EMAIL.
+// Un simple « email == ADMIN_EMAIL » ne suffit pas : sans email_verified, un
+// compte non vérifié usurpant l'adresse admin pourrait passer.
+function adminAutorise(dec, attendu) {
+  if (!dec) return false;
+  if (!attendu) return false;
+  if (dec.email_verified !== true) return false;
+  if ((dec.email || '').toLowerCase() !== attendu) return false;
+  return true;
+}
 
 async function estAdmin(req) {
   const h = req.headers['authorization'] || '';
   const m = h.match(/^Bearer\s+(.+)$/i);
   if (!m) return null;
   const dec = await auth().verifyIdToken(m[1]).catch(() => null);
-  if (!dec) return null;
   const attendu = (process.env.ADMIN_EMAIL || '').toLowerCase();
-  if (!attendu || (dec.email || '').toLowerCase() !== attendu) return null;
-  return dec;
+  return adminAutorise(dec, attendu) ? dec : null;
 }
 
 module.exports = async (req, res) => {
@@ -29,28 +41,27 @@ module.exports = async (req, res) => {
     const now = new Date();
 
     if (action === 'list_matieres') {
-      const s = await base.collection('matieres').get().catch(() => ({ docs: [] }));
-      const cat = fusionner(s.docs || []);
-      return send(res, 200, { ok: true, matieres: cat.map((m) => ({ id: m.id, nom: m.nom, ordre: m.ordre || 0, bientot: !!m.bientot, ressources: m.ressources || [] })) });
+      const s = await base.collection('matieres').orderBy('ordre').get();
+      return send(res, 200, { ok: true, matieres: s.docs.map((d) => ({ id: d.id, nom: (d.data().nom || d.id), ordre: d.data().ordre || 0 })) });
     }
 
     if (action === 'stats') {
       // Tableau de bord : compteurs synthetiques pour l'administrateur.
-      const [dem, mem, msg] = await Promise.all([
+      // Messagerie : les non-lus viennent du compteur global (D22, pas de balayage).
+      const [dem, mem, cpt] = await Promise.all([
         base.collection('demandes').get(),
         base.collection('membres').get(),
-        base.collection('messages').get()
+        base.collection('compteurs').doc('global').get()
       ]);
       let demEnAttente = 0;
       dem.forEach((d) => { const st = d.data().statut; if (!st || st === 'nouvelle' || st === 'ouverte') demEnAttente++; });
-      let memActifs = 0;
-      mem.forEach((d) => { if (d.data().statut === 'actif') memActifs++; });
-      let msgOuverts = 0;
-      msg.forEach((d) => { if (d.data().statut === 'ouvert') msgOuverts++; });
+      let memActifs = 0, filsAvecMsg = 0;
+      mem.forEach((d) => { const x = d.data() || {}; if (x.statut === 'actif') memActifs++; if (x.msgNonLusAdmin || 0) filsAvecMsg++; });
+      const msgNonLus = cpt.exists ? ((cpt.data() || {}).msgNonLus || 0) : 0;
       return send(res, 200, { ok: true, stats: {
         demandes: dem.size, demandesEnAttente: demEnAttente,
         membres: mem.size, membresActifs: memActifs,
-        messages: msg.size, messagesOuverts: msgOuverts
+        messages: filsAvecMsg, messagesOuverts: msgNonLus
       } });
     }
 
@@ -63,7 +74,6 @@ module.exports = async (req, res) => {
           id: d.id, prenom: x.prenom || '', nom: x.nom || '', email: x.email || '',
           statut: x.statut || '', numero: x.numero || '',
           compteurAcces: x.compteurAcces || 0, majLe: x.majLe || null,
-          expireLe: x.expireLe || null,
           matieres: Object.keys(abo).filter((k) => abo[k] && abo[k].abonne)
         };
       }) });
@@ -91,101 +101,30 @@ module.exports = async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    if (action === 'reconsiderer') {
-      // Rouvre une demande rejetee (en cas d'erreur de l'admin) : repasse en attente.
-      const id = clean(b.demandeId, 60);
-      if (!id) return send(res, 400, { ok: false, erreur: 'Demande inconnue.' });
-      await base.collection('demandes').doc(id).set({ statut: 'nouvelle', rejeteLe: null, motif: null }, { merge: true }).catch(() => {});
-      return send(res, 200, { ok: true });
-    }
-
-    if (action === 'resilier') {
-      // Suspend REELLEMENT un membre actif : son lien personnel cesse de fonctionner.
-      const id = clean(b.membreId, 60);
-      if (!id) return send(res, 400, { ok: false, erreur: 'Membre inconnu.' });
-      await base.collection('membres').doc(id).set({ statut: 'suspendu', suspenduLe: now, majLe: now }, { merge: true });
-      const snap = await base.collection('membres').doc(id).get();
-      const email = snap.exists ? snap.data().email : null;
-      if (email) await sendMail(email, 'Acces suspendu — Memento',
-        wrap('Acces suspendu', 'Bonjour,<br>Votre acces a Memento a ete suspendu par l\'administrateur. ' +
-          'Pour toute question, repondez a ce message ou ecrivez via votre espace.',
-          { url: site + '/', texte: 'Revenir sur Memento' })).catch(() => {});
-      return send(res, 200, { ok: true });
-    }
-
-    if (action === 'reactiver') {
-      // Reactive un membre precedemment suspendu (sans nouvelle cle).
-      const id = clean(b.membreId, 60);
-      if (!id) return send(res, 400, { ok: false, erreur: 'Membre inconnu.' });
-      await base.collection('membres').doc(id).set({ statut: 'actif', suspenduLe: null, majLe: now }, { merge: true });
-      return send(res, 200, { ok: true });
-    }
-
-    if (action === 'maj_ressources') {
-      // Attache a une matiere une liste de ressources (PDF/livres) par nom + lien.
-      const mid = clean(b.matiere, 60);
-      if (!mid) return send(res, 400, { ok: false, erreur: 'Matiere inconnue.' });
-      const ressources = Array.isArray(b.ressources)
-        ? b.ressources.slice(0, 50).map((x) => ({ nom: clean(x.nom, 160), url: clean(x.url, 1000) })).filter((x) => x.nom && x.url)
-        : [];
-      await base.collection('matieres').doc(mid).set({ ressources, majLe: now }, { merge: true });
-      return send(res, 200, { ok: true, ressources });
-    }
-
     if (action === 'list_messages') {
-      const s = await base.collection('messages').orderBy('majLe', 'desc').limit(100).get();
-      return send(res, 200, { ok: true, fils: s.docs.map((d) => Object.assign({ id: d.id }, d.data())) });
-    }
-
-    if (action === 'approuver') {
-      // Cree/active un membre, genere la cle d'activation et l'envoie par email.
-      const email = clean(b.email, 160).toLowerCase();
-      if (!validEmail(email)) return send(res, 400, { ok: false, erreur: 'Email invalide.' });
-      const nom = clean(b.nom, 80), prenom = clean(b.prenom, 80), numero = clean(b.numero, 30);
-      const matieres = Array.isArray(b.matieres) ? b.matieres.map((x) => clean(x, 60)).filter(Boolean) : [];
-      const avecCode = b.avecCode === true;
-      // Echeance d'acces (facultative) : duree en jours -> date d'expiration.
-      const dureeJours = Number(b.dureeJours) || 0;
-      const expireLe = dureeJours > 0 ? new Date(now.getTime() + dureeJours * 86400000) : null;
-      const cle = nouvelleCle();
-      const abo = {};
-      const codesClairs = {};
-      for (const mt of matieres) {
-        let codeHash = null;
-        if (avecCode) { const c = nouveauCode(); codesClairs[mt] = c; codeHash = hash(c); }
-        abo[mt] = { abonne: true, codeHash };
-      }
-      const existant = await base.collection('membres').where('email', '==', email).limit(1).get();
-      const data = { nom, prenom, email, numero, statut: 'cle_emise', cleHash: hash(cle), matieres: abo, compteurAcces: 0, expireLe, majLe: now };
-      let id;
-      if (existant.empty) { const r = await base.collection('membres').add(Object.assign({ creeLe: now }, data)); id = r.id; }
-      else { id = existant.docs[0].id; await existant.docs[0].ref.set(data, { merge: true }); }
-      if (b.demandeId) await base.collection('demandes').doc(clean(b.demandeId, 60)).set({ statut: 'traitee', traiteLe: now }, { merge: true }).catch(() => {});
-      let codesHtml = '';
-      for (const k of Object.keys(codesClairs)) codesHtml += '<br>• ' + k + ' : <b>' + codesClairs[k] + '</b>';
-      await sendMail(email, 'Votre cle d\'activation — Memento',
-        wrap('Acces accorde', 'Bonjour ' + (prenom || '') + ',<br>Votre acces est pret. ' +
-          'A votre PREMIERE connexion, saisissez votre nom, votre email et la cle ci-dessous :' +
-          '<div style="font-size:20px;font-weight:800;letter-spacing:2px;margin:12px 0">' + cle + '</div>' +
-          (codesHtml ? 'Codes par matiere :' + codesHtml : ''),
-          { url: site + '/', texte: 'Aller sur Memento' })).catch(() => {});
-      return send(res, 200, { ok: true, membreId: id });
+      // H2 : fils en sous-collection membres/{id}/messages (un doc par message).
+      return send(res, 200, { ok: true, fils: await msgLib.listerFilsAdmin(base) });
     }
 
     if (action === 'repondre') {
-      const id = clean(b.messageId, 60);
-      const texte = clean(b.texte, 4000);
-      const pieces = Array.isArray(b.pieces) ? b.pieces.slice(0, 10).map((x) => ({ nom: clean(x.nom, 120), url: clean(x.url, 1000) })) : [];
-      const ref = base.collection('messages').doc(id);
-      const doc = await ref.get();
-      if (!doc.exists) return send(res, 404, { ok: false, erreur: 'Fil introuvable.' });
-      const items = (doc.data().items || []).concat({ de: 'admin', texte, pieces, le: now });
-      await ref.update({ items, majLe: now });
-      const email = doc.data().email;
-      if (email) await sendMail(email, 'Reponse de l\'administrateur — Memento',
-        wrap('Nouveau message', 'Vous avez une reponse dans votre espace Memento.',
-          { url: site + '/', texte: 'Ouvrir Memento' })).catch(() => {});
-      return send(res, 200, { ok: true });
+      // H2 : `messageId` désigne le fil = l'identifiant du membre.
+      const membreId = clean(b.messageId, 60);
+      const texte = clean(b.texte, msgLib.MAX_TEXTE);
+      const pieces = Array.isArray(b.pieces) ? b.pieces : [];
+      const r = await msgLib.repondreAdmin(base, membreId, texte, pieces, sendMail, site);
+      return send(res, 200, r);
+    }
+
+    if (action === 'marquer_lu') {
+      // Admin ouvre une conversation : remet le compteur de non-lus à 0.
+      const r = await msgLib.marquerLuAdmin(base, clean(b.messageId || b.membreId, 60));
+      return send(res, 200, r);
+    }
+
+    if (action === 'supprimer_fil') {
+      // Seul l'admin peut effacer un fil (D17).
+      const r = await msgLib.supprimerFil(base, clean(b.messageId || b.membreId, 60));
+      return send(res, 200, r);
     }
 
     if (action === 'inviter_essai') {
@@ -199,8 +138,39 @@ module.exports = async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
+    // ---- Nouveau modèle (phase 3) : essais gratuits pilotés par l'admin ----
+    if (action === 'accorder_essai') {
+      const r = await essaisLib.accorderEssai(base, b, sendMail, site);
+      return send(res, 200, r);
+    }
+    if (action === 'list_essais') {
+      return send(res, 200, { ok: true, essais: await essaisLib.listEssais(base) });
+    }
+    if (action === 'supprimer_essai') {
+      return send(res, 200, await essaisLib.supprimerEssai(base, clean(b.hash, 80)));
+    }
+    // Approbation nouveau modèle (membre à clé unique + code 8 car.).
+    if (action === 'approuver_nm') {
+      const r = await inscLib.approuverDemande(base, b, sendMail, site);
+      return send(res, 200, { ok: true, membreId: r.membreId });
+    }
+    // Révoque les anciens liens/cookies d'un membre (incrément tokenVersion + nouvel email).
+    if (action === 'regenerer_lien') {
+      const r = await inscLib.regenererLien(base, b, sendMail, site);
+      return send(res, 200, r);
+    }
+    // Ferme tous les appareils enregistrés d'un membre (D5 : l'admin peut vider la liste).
+    if (action === 'vider_appareils') {
+      const r = await inscLib.viderAppareilsMembre(base, b);
+      return send(res, 200, r);
+    }
+
     return send(res, 400, { ok: false, erreur: 'Action inconnue.' });
   } catch (e) {
     return send(res, 500, { ok: false, erreur: 'Erreur serveur.' });
   }
 };
+
+// Export auxiliaire pour tests unitaires (K1) : la garde admin pure.
+// N'affecte pas le handler HTTP exporté par défaut ci-dessus.
+module.exports.adminAutorise = adminAutorise;
