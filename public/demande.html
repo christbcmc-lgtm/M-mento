@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mémento — Demande d'accès</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/themes.css">
+<link rel="stylesheet" href="assets/base.css">
+<script src="assets/js/theme-boot.js"></script>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
+      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M44 6h8v14l-4-3-4 3z" fill="var(--sur-accent,#fff)" opacity=".85"></path>
+    </svg>
+    <span>Mémento</span>
+  </div>
+  <span class="spacer"></span>
+  <select class="theme" aria-label="Thème">
+    <option value="clair">Clair</option><option value="sepia">Sépia</option>
+    <option value="gris">Gris</option><option value="sombre">Sombre</option>
+    <option value="noir">Noir</option><option value="bleu-nuit">Bleu nuit</option>
+    <option value="vert-foret">Vert forêt</option><option value="violet">Violet</option>
+  </select>
+</header>
+
+<div class="hero">
+  <i class="blob b1"></i><i class="blob b2"></i>
+  <h1>Demander un accès</h1>
+  <p>Remplissez ce formulaire. Après validation, vous recevrez par email un lien d'activation, puis votre lien personnel.</p>
+</div>
+
+<div class="wrap">
+  <section class="panel">
+    <form id="f-dem" novalidate>
+      <div aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden">
+        <label for="d-site">Ne pas remplir</label>
+        <input id="d-site" name="site_web" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <label for="d-nom">Nom</label>
+      <input id="d-nom" name="nom" autocomplete="family-name" placeholder="Votre nom">
+      <label for="d-prenom">Prénom</label>
+      <input id="d-prenom" name="prenom" autocomplete="given-name" placeholder="Votre prénom">
+      <label for="d-mail">Email</label>
+      <input id="d-mail" name="email" type="email" autocomplete="email" placeholder="vous@exemple.com">
+      <label for="d-num">Numéro de téléphone</label>
+      <input id="d-num" name="numero" type="tel" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78">
+      <label>Type d'accès</label>
+      <div class="mat-liste" role="radiogroup" aria-label="Type d'accès">
+        <label class="case"><input type="radio" name="type" value="abonnement" checked> Abonnement</label>
+        <label class="case"><input type="radio" name="type" value="essai"> Essai gratuit</label>
+      </div>
+      <label>Matière(s) souhaitée(s)</label>
+      <div id="d-mat" class="mat-liste"><span class="aide">Chargement des matières…</span></div>
+      <label for="d-msg">Message <span style="font-weight:400;color:var(--texte-doux)">(facultatif)</span></label>
+      <textarea id="d-msg" name="message" placeholder="Précisez votre besoin si besoin…"></textarea>
+      <div class="err" id="d-err"></div>
+      <button class="btn" type="submit">Envoyer la demande</button>
+    </form>
+    <div class="note">Un <b>essai gratuit</b> peut être accordé par l'administrateur à la suite de votre demande.</div>
+  </section>
+</div>
+
+<div class="overlay" id="ov">
+  <div class="boite">
+    <svg class="ok" viewBox="0 0 90 90"><circle cx="45" cy="45" r="38"></circle><path d="M28 46l12 12 23-26"></path></svg>
+    <h2>Demande envoyée</h2>
+    <div class="cit" id="cit"></div>
+    <a class="btn" href="index.html" style="display:block;text-align:center;text-decoration:none">Retour à l'accueil</a>
+  </div>
+</div>
+
+<footer class="app">Mémento — accès réservé.</footer>
+
+<script src="assets/app-theme.js"></script>
+<script src="assets/demande.js"></script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mémento — Administration</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/themes.css">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/espace.css">
+<script src="assets/js/theme-boot.js"></script>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
+      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <span>Mémento — Admin</span>
+  </div>
+  <span class="spacer"></span>
+  <span class="bonjour" id="qui"></span>
+  <button class="btn mini ghost" id="deco" hidden>Déconnexion</button>
+  <select class="theme" aria-label="Thème">
+    <option value="clair">Clair</option><option value="sepia">Sépia</option>
+    <option value="gris">Gris</option><option value="sombre">Sombre</option>
+    <option value="noir">Noir</option><option value="bleu-nuit">Bleu nuit</option>
+    <option value="vert-foret">Vert forêt</option><option value="violet">Violet</option>
+  </select>
+</header>
+
+<!-- Connexion admin -->
+<div class="wrap" id="bloc-login">
+  <section class="panel">
+    <h2 style="margin-top:0">Connexion administrateur</h2>
+    <p class="aide">Réservé au compte administrateur (authentification Firebase).</p>
+    <form id="f-login" novalidate>
+      <label for="a-mail">Email</label>
+      <input id="a-mail" type="email" autocomplete="email" placeholder="admin@exemple.com">
+      <label for="a-pass">Mot de passe</label>
+      <input id="a-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+      <div class="err" id="a-err"></div>
+      <button class="btn" type="submit">Se connecter</button>
+    </form>
+  </section>
+</div>
+
+<!-- Console admin -->
+<main class="wrap large" id="bloc-admin" hidden>
+
+  <!-- Tableau de bord : récapitulatif -->
+  <section class="panel" style="margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <h2 style="margin:0;flex:1">Tableau de bord</h2>
+      <button class="btn mini ghost" id="rafr-tout">Tout rafraîchir</button>
+    </div>
+    <div class="cartes-stats" id="stats">
+      <div class="stat"><span class="n" id="s-dem">—</span><span class="l">Demandes</span><span class="sub" id="s-dem-a"></span></div>
+      <div class="stat"><span class="n" id="s-mem">—</span><span class="l">Membres</span><span class="sub" id="s-mem-a"></span></div>
+      <div class="stat"><span class="n" id="s-msg">—</span><span class="l">Messages</span><span class="sub" id="s-msg-a"></span></div>
+    </div>
+  </section>
+
+  <div class="admin-cols">
+    <section class="panel">
+      <h2 style="margin-top:0">Demandes d'accès</h2>
+      <button class="btn mini ghost" id="rafr-dem">Rafraîchir</button>
+      <div id="liste-dem" style="margin-top:12px"></div>
+    </section>
+    <section class="panel">
+      <h2 style="margin-top:0">Messagerie</h2>
+      <button class="btn mini ghost" id="rafr-msg">Rafraîchir</button>
+      <div id="liste-msg" style="margin-top:12px"></div>
+    </section>
+  </div>
+
+  <section class="panel" style="margin-top:18px">
+    <h2 style="margin-top:0">Accorder / activer un accès</h2>
+    <p class="aide">Cliquez « Préparer l'activation » sur une demande : les coordonnées se remplissent toutes seules. Il ne vous reste qu'à <b>cocher</b> les matières puis valider — rien à taper.</p>
+    <div class="row">
+      <div><label for="g-prenom">Prénom</label><input id="g-prenom"></div>
+      <div><label for="g-nom">Nom</label><input id="g-nom"></div>
+    </div>
+    <div class="row">
+      <div><label for="g-mail">Email</label><input id="g-mail" type="email"></div>
+      <div><label for="g-num">Numéro (facultatif — preuve d'identité)</label><input id="g-num"></div>
+    </div>
+    <label>Matières à inclure <span class="aide" style="font-weight:400">(cochez — multi-sélection)</span></label>
+    <div class="chips" id="g-chips"><span class="aide">Chargement des matières…</span></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:600">
+      <input type="checkbox" id="g-code" style="width:auto" checked> Générer automatiquement un code par matière
+    </label>
+    <div class="row" style="margin-top:14px">
+      <div>
+        <label for="g-duree">Durée d'accès</label>
+        <select id="g-duree">
+          <option value="7">7 jours</option>
+          <option value="30" selected>30 jours</option>
+          <option value="90">90 jours</option>
+          <option value="180">180 jours</option>
+          <option value="perso">Personnalisée…</option>
+        </select>
+      </div>
+      <div>
+        <label for="g-duree-perso">Durée personnalisée (jours)</label>
+        <input id="g-duree-perso" type="number" min="1" step="1" placeholder="ex. 45">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="g-appareils">Appareils autorisés</label>
+        <select id="g-appareils">
+          <option value="1" selected>1 appareil</option>
+          <option value="2">2 appareils</option>
+        </select>
+      </div>
+      <div>
+        <label for="g-quota">Quota d'heures (0 = illimité)</label>
+        <input id="g-quota" type="number" min="0" step="1" value="0">
+      </div>
+    </div>
+    <input type="hidden" id="g-demande">
+    <div class="err" id="g-err"></div>
+    <button class="btn" id="g-ok">Accorder l'accès et envoyer la clé</button>
+  </section>
+
+  <!-- Membres -->
+  <section class="panel" style="margin-top:18px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <h2 style="margin:0;flex:1">Membres</h2>
+      <button class="btn mini ghost" id="rafr-mem">Rafraîchir</button>
+    </div>
+    <div id="liste-mem" style="margin-top:12px"></div>
+  </section>
+
+  <section class="panel" style="margin-top:18px">
+    <h2 style="margin-top:0">Inviter à un essai gratuit</h2>
+    <label for="e-mail">Email du destinataire</label>
+    <input id="e-mail" type="email">
+    <div class="err" id="e-err"></div>
+    <button class="btn" id="e-ok">Envoyer l'invitation d'essai</button>
+    <div id="e-lien" hidden style="margin-top:12px">
+      <label>Lien d'essai (vous pouvez le copier et l'envoyer vous-même) :</label>
+      <div class="copie-lien"><input id="e-lien-url" readonly><button class="btn mini" id="e-lien-copy" type="button">Copier</button></div>
+    </div>
+  </section>
+</main>
+
+<!-- Modale : répondre à un message -->
+<div class="overlay" id="ov-rep">
+  <div class="boite" style="text-align:left;max-width:520px">
+    <h2 style="margin:0 0 6px">Répondre</h2>
+    <p class="aide" id="rep-dest" style="margin:0 0 10px"></p>
+    <div class="fil" id="rep-fil" style="max-height:220px"></div>
+    <label for="rep-txt">Votre réponse</label>
+    <textarea id="rep-txt"></textarea>
+    <label for="rep-pnom">Pièce jointe — nom (facultatif)</label>
+    <input id="rep-pnom" placeholder="Cours de thermodynamique.pdf">
+    <label for="rep-purl">Pièce jointe — lien (facultatif)</label>
+    <input id="rep-purl" placeholder="https://…">
+    <div class="err" id="rep-err"></div>
+    <button class="btn" id="rep-ok">Envoyer la réponse</button>
+    <button class="btn ghost" id="rep-fermer" style="margin-top:10px">Fermer</button>
+  </div>
+</div>
+
+<footer class="app">Mémento — console d'administration.</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="assets/firebase-config.js"></script>
+<script src="assets/app-theme.js"></script>
+<script src="assets/admin-client.js"></script>
+</body>
+</html>
