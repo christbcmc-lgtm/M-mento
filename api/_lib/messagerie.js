@@ -86,8 +86,11 @@ async function repondreAdmin(db, membreId, texte, pieces, mailer, siteUrl) {
   const s = await ref.get();
   if (!s.exists) throw erreur(404, 'Membre introuvable.');
   const t = String(texte || '').trim().slice(0, MAX_TEXTE);
-  if (!t) throw erreur(400, 'R\u00e9ponse vide.');
   const p = validerPieces(pieces);
+  // K7 : l'admin peut envoyer une RESSOURCE seule (PDF/livre, lien https) sans
+  // texte d'accompagnement (DECISIONS : « envoyer des réponses ET ressources »).
+  // On n'exige un texte que s'il n'y a AUCUNE pièce valide à joindre.
+  if (!t && !p.length) throw erreur(400, 'Message ou ressource requis.');
   await ecrireMessage(db, membreId, 'admin', t, p);
   const email = (s.data() || {}).email || '';
   if (email && typeof mailer === 'function') {

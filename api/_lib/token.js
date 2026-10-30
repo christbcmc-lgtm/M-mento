@@ -19,10 +19,9 @@ function signEssai(essaiId, minutes) {
   return jwt.sign({ t: 'essai', e: essaiId }, secret(), { expiresIn: (minutes || 15) + 'm' });
 }
 
-// Invitation d'essai gratuit emise par l'administrateur (a usage unique, courte duree).
-function signInviteEssai(jours) {
-  return jwt.sign({ t: 'invite_essai' }, secret(), { expiresIn: (jours || 7) + 'd' });
-}
+// Invitation d'essai gratuit (K3) : RETIRÉE. L'ancienne voie « invite_essai »
+// (lien ?i= sans enregistrement essais/{hash}) est supprimée au profit de la voie
+// unique `accorder_essai` -> `signEssaiLien`. Fonction conservée absente volontairement.
 
 // Jeton de decision (lien emaille a l'admin). Usage unique garanti par le statut de la demande.
 function signDecision(demandeId, jours) {
@@ -42,4 +41,4 @@ function verify(token) {
   catch (e) { return null; }
 }
 
-module.exports = { signPersonnel, signEssai, signInviteEssai, signDecision, signEssaiLien, signEssaiCookie, verify };
+module.exports = { signPersonnel, signEssai, signDecision, signEssaiLien, signEssaiCookie, verify };

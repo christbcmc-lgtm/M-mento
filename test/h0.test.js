@@ -19,9 +19,11 @@ const ATTENDU = {
   'evaluation': ['liste', 'quiz', 'resultats', 'soumettre'],
   'message':    [],                 // pas de a= : routes GET / POST
   'admin':      ['list_matieres', 'stats', 'list_membres', 'list_demandes', 'rejeter',
-                 'list_messages', 'repondre', 'inviter_essai', 'accorder_essai',
+                 'list_messages', 'repondre', 'marquer_lu', 'supprimer_fil',
+                 'inviter_essai', 'accorder_essai',
                  'list_essais', 'supprimer_essai', 'approuver_nm', 'regenerer_lien',
-                 'marquer_lu', 'supprimer_fil']
+                 'vider_appareils', 'prolonger', 'suspendre', 'reactiver', 'supprimer_membre',
+                 'list_journal', 'stockage', 'purger']
 };
 
 test('H0 : docs/CONTRAT-API.md existe', () => {

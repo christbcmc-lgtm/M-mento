@@ -116,12 +116,17 @@ async function acces(db, req, res) {
 async function code(db, req, res) {
   if (req.method !== 'POST') return send(res, 405, { ok: false, erreur: 'Méthode non autorisée.' });
   sess.exigerEntete(req);
+  // K9 (§9.C) : si l'adresse est déjà bloquée pour abus, 429 immédiat (MSG_ABUS).
+  await lim.gardeAbus(db, lim.ipClient(req));
   const { membre, deviceId } = await sess.authentifier(db, req);
   // 5 essais par fenêtre : le 6e déclenche 429 (et le bon code reste refusé jusqu'à la fin).
   await lim.limiter(db, 'code:' + membre.id, 5, 15 * 60);
   const b = await readBody(req);
   const saisi = clean(b.code, 16).toUpperCase();
   if (!membre.codeHash || !secret.compare(saisi, membre.codeHash)) {
+    // K9 (§9.C) : refus d'authentification compté par adresse. Au 10e en 5 min,
+    // signalerRefusAuth écrit l'alerte journal + compteur et jette 429 (MSG_ABUS).
+    await lim.signalerRefusAuth(db, lim.ipClient(req));
     return send(res, 403, { ok: false, erreur: 'Code incorrect.' });
   }
   const jusqua = Date.now() + DOUZE_H;

@@ -3,11 +3,11 @@
 const { db, auth } = require('./_lib/firebase');
 const { sendMail, wrap } = require('./_lib/mail');
 const { hash, nouvelleCle, nouveauCode } = require('./_lib/secret');
-const { signInviteEssai } = require('./_lib/token');
 const { readBody, send, methodGuard, validEmail, clean } = require('./_lib/http');
 const essaisLib = require('./_lib/essais');
 const inscLib = require('./_lib/inscription');
 const msgLib = require('./_lib/messagerie');
+const maintLib = require('./_lib/maintenance');
 
 // K1 (D12) : garde admin PURE et testable. L'accès admin exige un jeton dont
 // l'email est VÉRIFIÉ (email_verified === true) ET égal à ADMIN_EMAIL.
@@ -58,10 +58,12 @@ module.exports = async (req, res) => {
       let memActifs = 0, filsAvecMsg = 0;
       mem.forEach((d) => { const x = d.data() || {}; if (x.statut === 'actif') memActifs++; if (x.msgNonLusAdmin || 0) filsAvecMsg++; });
       const msgNonLus = cpt.exists ? ((cpt.data() || {}).msgNonLus || 0) : 0;
+      const alertesAbus = cpt.exists ? ((cpt.data() || {}).alertesAbus || 0) : 0;
       return send(res, 200, { ok: true, stats: {
         demandes: dem.size, demandesEnAttente: demEnAttente,
         membres: mem.size, membresActifs: memActifs,
-        messages: filsAvecMsg, messagesOuverts: msgNonLus
+        messages: filsAvecMsg, messagesOuverts: msgNonLus,
+        alertesAbus: alertesAbus
       } });
     }
 
@@ -128,14 +130,10 @@ module.exports = async (req, res) => {
     }
 
     if (action === 'inviter_essai') {
-      const email = clean(b.email, 160).toLowerCase();
-      if (!validEmail(email)) return send(res, 400, { ok: false, erreur: 'Email invalide.' });
-      const invitation = signInviteEssai(7);
-      const lien = site + '/essai.html?i=' + encodeURIComponent(invitation);
-      await sendMail(email, 'Essai gratuit — Memento',
-        wrap('Essai gratuit', 'Vous pouvez tester Memento (apercu limite dans le temps, lecture seule).',
-          { url: lien, texte: 'Demarrer l\'essai' })).catch(() => {});
-      return send(res, 200, { ok: true });
+      // K3 : voie d'essai unifiée. L'ancienne invitation par lien signé (sans
+      // enregistrement essais/{hash}, sans unicité par email, sans filigrane)
+      // est retirée : la SEULE voie d'octroi est `accorder_essai` (D10).
+      return send(res, 410, { ok: false, erreur: 'Action retirée : utilisez « accorder un essai ».' });
     }
 
     // ---- Nouveau modèle (phase 3) : essais gratuits pilotés par l'admin ----
@@ -164,10 +162,42 @@ module.exports = async (req, res) => {
       const r = await inscLib.viderAppareilsMembre(base, b);
       return send(res, 200, r);
     }
+    // K2 : cycle de vie d'un membre (fiche admin : prolonger/suspendre/reactiver/supprimer).
+    if (action === 'prolonger') {
+      const r = await inscLib.prolongerMembre(base, b);
+      return send(res, 200, r);
+    }
+    if (action === 'suspendre') {
+      const r = await inscLib.suspendreMembre(base, b);
+      return send(res, 200, r);
+    }
+    if (action === 'reactiver') {
+      const r = await inscLib.reactiverMembre(base, b);
+      return send(res, 200, r);
+    }
+    if (action === 'supprimer_membre') {
+      const r = await inscLib.supprimerMembre(base, b);
+      return send(res, 200, r);
+    }
+
+    // K8 (D21/D22) : maintenance admin — journal d'audit, stockage, purge ciblée.
+    if (action === 'list_journal') {
+      return send(res, 200, { ok: true, journal: await maintLib.listerJournal(base, b.max) });
+    }
+    if (action === 'stockage') {
+      return send(res, 200, { ok: true, stockage: await maintLib.rapportStockage(base) });
+    }
+    if (action === 'purger') {
+      const r = await maintLib.purger(base, clean(b.cible, 40));
+      return send(res, 200, r);
+    }
 
     return send(res, 400, { ok: false, erreur: 'Action inconnue.' });
   } catch (e) {
-    return send(res, 500, { ok: false, erreur: 'Erreur serveur.' });
+    // Honore un status porte par l'erreur (erreur(status,msg) des libs) ; sinon 500.
+    const status = (e && e.status) || 500;
+    const erreur = status === 500 ? 'Erreur serveur.' : (e.message || 'Erreur.');
+    return send(res, status, { ok: false, erreur });
   }
 };
 

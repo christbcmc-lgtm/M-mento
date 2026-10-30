@@ -33,8 +33,8 @@ async function incr(db, champ, n) {
     tx.set(ref, d);
   });
 }
-async function journal(db, qui, action, cible) {
-  await db.collection('journal').doc().set({ qui, action, cible: cible || null, le: Date.now() });
+async function journal(db, qui, action, cible, type) {
+  await db.collection('journal').doc().set({ qui, action, cible: cible || null, type: type || 'info', le: Date.now() });
 }
 
 // --- public?a=demande ---
@@ -233,4 +233,116 @@ async function viderAppareilsMembre(db, params) {
   return { ok: true, appareilsSupprimes };
 }
 
-module.exports = { creerDemande, decisionGet, decisionRefus, approuverDemande, reinitCode, regenererLien, viderAppareilsMembre, catalogueIds, esc };
+// === K2 : cycle de vie d'un membre (actions admin) ==========================
+// Toutes ces fonctions sont PURES/injectees (db passe en argument) et testables
+// hors reseau. Elles journalisent chaque action (journal) et renvoient { ok }.
+const JOUR_MS = 24 * 3600 * 1000;
+
+// --- admin?a=prolonger : repousse la duree d'acces d'un membre (D20) ---
+// jours > 0 obligatoire. Regle :
+//  - acces encore valide (expireLe futur) : on AJOUTE les jours a expireLe ;
+//  - acces active mais expire (ou sans date) : on repart de maintenant, et si
+//    le statut etait 'expire' on le repasse a 'actif' ;
+//  - membre pas encore active (cle_emise) : on ajuste dureeJours (l'expiration
+//    ne court qu'a partir de l'activation).
+async function prolongerMembre(db, params) {
+  const membreId = String((params && params.membreId) || '');
+  if (!membreId) throw erreur(400, 'Membre requis.');
+  const jours = Math.max(0, parseInt(params && params.jours, 10) || 0);
+  if (!jours) throw erreur(400, 'Nombre de jours requis.');
+  const snap = await db.collection('membres').doc(membreId).get();
+  if (!snap.exists) throw erreur(404, 'Membre introuvable.');
+  const m = snap.data() || {};
+  const now = Date.now();
+  const maj = { majLe: now };
+  if (m.expireLe && m.expireLe > now) {
+    maj.expireLe = m.expireLe + jours * JOUR_MS;
+  } else if (m.statut === 'actif' || m.statut === 'expire') {
+    maj.expireLe = now + jours * JOUR_MS;
+    if (m.statut === 'expire') maj.statut = 'actif';
+  } else {
+    maj.dureeJours = (m.dureeJours || 0) + jours;
+  }
+  await db.collection('membres').doc(membreId).update(maj);
+  await journal(db, 'admin', 'prolonger', membreId);
+  return { ok: true, expireLe: maj.expireLe || m.expireLe || null,
+    dureeJours: maj.dureeJours || m.dureeJours || null, statut: maj.statut || m.statut || null };
+}
+
+// --- admin?a=suspendre : coupe l'acces immediatement ---
+// Passe le statut a 'suspendu' ET incremente tokenVersion : tous les cookies de
+// session ouverts deviennent invalides (session.authentifier rejette alors a la
+// fois sur la version et sur le statut). Reversible par reactiver.
+async function suspendreMembre(db, params) {
+  const membreId = String((params && params.membreId) || '');
+  if (!membreId) throw erreur(400, 'Membre requis.');
+  const snap = await db.collection('membres').doc(membreId).get();
+  if (!snap.exists) throw erreur(404, 'Membre introuvable.');
+  const m = snap.data() || {};
+  const tokenVersion = (m.tokenVersion || 0) + 1;
+  await db.collection('membres').doc(membreId).update({ statut: 'suspendu', tokenVersion, majLe: Date.now() });
+  await journal(db, 'admin', 'suspendre', membreId);
+  return { ok: true, statut: 'suspendu', tokenVersion };
+}
+
+// --- admin?a=reactiver : remet le statut a 'actif' (depuis suspendu/expire) ---
+// N'invente pas de nouvelle date : si l'acces etait expire (expireLe passe),
+// l'admin doit aussi prolonger pour qu'il redevienne reellement utilisable.
+async function reactiverMembre(db, params) {
+  const membreId = String((params && params.membreId) || '');
+  if (!membreId) throw erreur(400, 'Membre requis.');
+  const snap = await db.collection('membres').doc(membreId).get();
+  if (!snap.exists) throw erreur(404, 'Membre introuvable.');
+  await db.collection('membres').doc(membreId).update({ statut: 'actif', majLe: Date.now() });
+  await journal(db, 'admin', 'reactiver', membreId);
+  return { ok: true, statut: 'actif' };
+}
+
+// Vide une sous-collection membres/{id}/<nom> et renvoie le nombre supprime.
+async function viderSousCollection(db, membreId, nom) {
+  const col = db.collection('membres').doc(membreId).collection(nom);
+  const snap = await col.get();
+  const ids = [];
+  snap.forEach((d) => { ids.push(d.id); });
+  for (const id of ids) { await col.doc(id).delete(); }
+  return ids.length;
+}
+
+// Supprime les documents d'une collection de premier niveau rattaches par
+// membreId. Utilise .where() si la base le supporte (Firestore reel), sinon
+// balaye (base de test). La re-verification de membreId reste sure dans les deux cas.
+async function supprimerParMembre(db, collection, membreId) {
+  const col = db.collection(collection);
+  let snap;
+  if (typeof col.where === 'function') snap = await col.where('membreId', '==', membreId).get();
+  else snap = await col.get();
+  const ids = [];
+  snap.forEach((d) => { if (((d.data() || {}).membreId) === membreId) ids.push(d.id); });
+  for (const id of ids) { await db.collection(collection).doc(id).delete(); }
+  return ids.length;
+}
+
+// --- admin?a=supprimer_membre : efface TOUT et libere l'email (D21) ---
+// Profil + appareils + notes + messages + resultats + evals ; libere le verrou
+// emails/{hash} pour que l'adresse redevienne disponible. Journalise.
+async function supprimerMembre(db, params) {
+  const membreId = String((params && params.membreId) || '');
+  if (!membreId) throw erreur(400, 'Membre requis.');
+  const snap = await db.collection('membres').doc(membreId).get();
+  if (!snap.exists) throw erreur(404, 'Membre introuvable.');
+  const m = snap.data() || {};
+  const supprime = {
+    appareils: await viderSousCollection(db, membreId, 'appareils'),
+    notes: await viderSousCollection(db, membreId, 'notes'),
+    messages: await viderSousCollection(db, membreId, 'messages'),
+    resultats: await supprimerParMembre(db, 'resultats', membreId),
+    evals: await supprimerParMembre(db, 'evals', membreId)
+  };
+  if (m.email) await em.liberer(db, m.email);
+  await db.collection('membres').doc(membreId).delete();
+  await journal(db, 'admin', 'supprimer_membre', membreId);
+  return { ok: true, supprime };
+}
+
+module.exports = { creerDemande, decisionGet, decisionRefus, approuverDemande, reinitCode, regenererLien, viderAppareilsMembre,
+  prolongerMembre, suspendreMembre, reactiverMembre, supprimerMembre, catalogueIds, esc, journal, incr };
