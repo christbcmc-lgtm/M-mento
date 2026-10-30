@@ -11,6 +11,16 @@
 <link rel="stylesheet" href="assets/themes.css">
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/espace.css">
+<style>
+  /* K1ter : bandeaux globaux. Couleurs via variables de thème (fallbacks à
+     revoir au passage K17 : 0 couleur en dur). */
+  .bandeau{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;
+    padding:10px 16px;text-align:center;font-weight:600;
+    background:var(--danger-bg,var(--danger,#8a1f1f));color:var(--danger-fg,var(--sur-danger,#fff));}
+  .bandeau[hidden]{display:none;}
+  .bandeau-verif{background:var(--avert-bg,var(--warn,#8a6d1f));color:var(--avert-fg,var(--sur-warn,#fff));}
+  .bandeau .sous{font-weight:400;opacity:.9;}
+</style>
 <script src="assets/js/theme-boot.js"></script>
 </head>
 <body>
@@ -32,6 +42,17 @@
     <option value="vert-foret">Vert forêt</option><option value="violet">Violet</option>
   </select>
 </header>
+
+<!-- K1ter : bandeau d'erreur global (toute erreur d'appel /api/admin y est affichée, jamais ignorée) -->
+<div id="bandeau" class="bandeau" role="alert" aria-live="assertive" hidden></div>
+
+<!-- K1ter : bandeau « email non vérifié » -->
+<div id="bandeau-verif" class="bandeau bandeau-verif" role="alert" hidden>
+  <span>Votre email n'est pas vérifié.</span>
+  <button id="verif-envoyer" type="button" class="btn mini">Envoyer l'email de vérification</button>
+  <button id="verif-recheck" type="button" class="btn mini ghost">J'ai vérifié mon email</button>
+  <span id="verif-msg" class="sous" role="status" aria-live="polite"></span>
+</div>
 
 <!-- Connexion admin -->
 <div class="wrap" id="bloc-login">

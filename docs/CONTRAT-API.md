@@ -46,7 +46,7 @@ Noyau d'accès. `switch` sur `a`. Toute action inconnue → `404`.
 | `activer` | POST | en-tête · anti-force brute 10/h par IP | corps `{ nom, email, cle }` | `{ lien }` (lien personnel `/espace?t=…`) | `400` nom/email/clé incorrect (neutre), `403` en-tête, `405`, `429` |
 | `session` | GET | jeton `?t=` (jeton personnel) | query `t` | `{ ok:true }` + `Set-Cookie: mh_s` | `401` lien invalide **ou version périmée** (`v` ≠ `tokenVersion`), `403` suspendu/non activé/expiré |
 | `acces` | GET | session | cookie `mh_s` | `{ profil:{prenom,nom,matieres[],theme,expireLe,maxAppareils}, deverrouille, deverrouilleJusqua }` | `401` session, `403` statut |
-| `code` | POST | session · en-tête · anti-force brute 5 / 15 min | corps `{ code }` | `{ deverrouilleJusqua }` (12 h) | `400`? non, `403` code incorrect / en-tête, `405`, `429` |
+| `code` | POST | session · en-tête · anti-force brute 5 / 15 min · **K9 §9.C garde abus par IP** | corps `{ code }` | `{ deverrouilleJusqua }` (12 h) | `400`? non, `403` code incorrect / en-tête, `405`, `429` (anti-force brute **ou** abus §9.C : message EXACT « Activité inhabituelle détectée. Cette adresse est temporairement bloquée et l'administrateur en est informé. ») |
 | `lien-perdu` | POST | en-tête · anti-force brute 5/h par IP | corps `{ email }` | `{ message }` **toujours neutre** | `403` en-tête, `405` |
 | `deconnexion` | POST/GET | — | — | `{ ok:true }` + cookie effacé | — |
 
@@ -116,23 +116,39 @@ Actions administrateur. **POST uniquement** (`405` sinon). Exige un jeton Fireba
 | `action` | Entrées | Sortie `ok:true` | Notes |
 |----------|---------|------------------|-------|
 | `list_matieres` | — | `{ matieres:[{id,nom,ordre}] }` | Liste du catalogue admin. |
-| `stats` | — | `{ stats:{demandes,demandesEnAttente,membres,membresActifs,messages,messagesOuverts} }` | Compteurs du tableau de bord. |
+| `stats` | — | `{ stats:{demandes,demandesEnAttente,membres,membresActifs,messages,messagesOuverts,alertesAbus} }` | Compteurs du tableau de bord. **K9** : `alertesAbus` = nombre d'alertes d'abus (§9.C) via `compteurs/global.alertesAbus`. |
 | `list_membres` | — | `{ membres:[…] }` (max 200) | Tri par `majLe` desc. |
 | `list_demandes` | — | `{ demandes:[…] }` (max 100) | Tri par `creeLe` desc. |
 | `rejeter` | `{ demandeId, email, motif? }` | `{ ok:true }` | Marque `rejetee` + email de refus au demandeur. |
 | `list_messages` | — | `{ fils:[{id,nom,email,items[],nonLus,majLe}] }` | Fils en sous-collection `membres/{id}/messages` ; `id` = identifiant du membre ; tri par dernier message. |
-| `repondre` | `{ messageId, texte, pieces[]? }` | `{ ok:true }` | `messageId` = identifiant du **membre** (le fil). Ajoute un message `de:'admin'` + email de notification (sans adresse admin, best-effort). Pièces https uniquement. |
+| `repondre` | `{ messageId, texte?, pieces[]? }` | `{ ok:true }` | `messageId` = identifiant du **membre** (le fil). Ajoute un message `de:'admin'` + email de notification (sans adresse admin, best-effort). **K7** : `texte` OU au moins une ressource (`pieces`) suffit — l'admin peut envoyer une **ressource PDF seule** ; `400 'Message ou ressource requis.'` si les deux sont vides. Pièces : liens **https** uniquement (javascript:/http:/data: rejetés), 10 max, `nom` borné à 120, `url` à 1000. |
 | `marquer_lu` | `{ messageId }` (= membreId) | `{ ok:true, nonLus:0 }` | Remet `msgNonLusAdmin` à 0 et décrémente `compteurs/global.msgNonLus`. |
 | `supprimer_fil` | `{ messageId }` (= membreId) | `{ ok:true }` | Efface tout le fil du membre (seul l'admin peut effacer, D17). |
-| `inviter_essai` | `{ email }` | `{ ok:true }` | Envoie un lien d'essai signé (7 j). `400` email invalide. |
-| `accorder_essai` | `{ … }` | résultat `essaisLib.accorderEssai` | Essai piloté par l'admin. |
+| `inviter_essai` | `{ email }` | — | **K3 : RETIRÉE.** Ancienne « invitation » (lien `?i=` signé, sans enregistrement `essais/{hash}` ni unicité par email). Renvoie désormais `410 { ok:false, erreur:'Action retirée…' }`. Voie d'essai unique = `accorder_essai`. |
+| `accorder_essai` | `{ email, nom?, prenom?, dureeMin? }` | résultat `essaisLib.accorderEssai` (`{ ok:true, hash, lien? }`) | **Voie d'essai unique** pilotée par l'admin : crée `essais/{hash}`, `409` si un essai existe déjà pour l'email, lien envoyé par email. |
 | `list_essais` | — | `{ essais:[…] }` | — |
 | `supprimer_essai` | `{ hash }` | résultat `essaisLib.supprimerEssai` | Autorise un nouvel essai. |
-| `approuver_nm` | `{ demandeId, matieres[], dureeJours, maxAppareils, quotaHeures }` | `{ membreId }` | Approbation nouveau modèle : clé + code 8 car. générés serveur, **email avant écritures** (`502` si l'envoi échoue, rien créé). |
-| `regenerer_lien` | `{ membreId, viderAppareils? }` | `{ ok:true, appareilsSupprimes }` | Révoque les accès d'un membre : incrémente `tokenVersion` (anciens liens `?t=` **et** cookies `mh_s` invalidés). **Nouveau lien envoyé par email avant l'écriture** (`502` si l'envoi échoue, version inchangée, appareils conservés) ; `404`/`410` si membre introuvable. **I1** : vide aussi tous les appareils enregistrés par défaut ; `viderAppareils:false` conserve la liste. |
+| `approuver_nm` | `{ demandeId, matieres[], dureeJours, maxAppareils, quotaHeures }` | `{ membreId }` | Approbation nouveau modèle : clé + code 8 car. générés serveur, **email avant écritures** (`502` si l'envoi échoue, rien créé). || `regenerer_lien` | `{ membreId, viderAppareils? }` | `{ ok:true, appareilsSupprimes }` | Révoque les accès d'un membre : incrémente `tokenVersion` (anciens liens `?t=` **et** cookies `mh_s` invalidés). **Nouveau lien envoyé par email avant l'écriture** (`502` si l'envoi échoue, version inchangée, appareils conservés) ; `404`/`410` si membre introuvable. **I1** : vide aussi tous les appareils enregistrés par défaut ; `viderAppareils:false` conserve la liste. |
 | `vider_appareils` | `{ membreId }` | `{ ok:true, appareilsSupprimes }` | **I1** : ferme tous les appareils enregistrés du membre (efface la sous-collection `membres/{id}/appareils`) ; le membre devra rouvrir une session dans la limite de `maxAppareils` (D5). Journalisé (`vider_appareils`). `400` membre requis, `404` membre introuvable. |
 
 Toutes les erreurs non prévues de `admin` renvoient `500` `{ ok:false, erreur:'Erreur serveur.' }`.
+
+**K2 — cycle de vie du membre** (`api/_lib/inscription.js`, câblé dans `admin.js` ; le `catch` honore `e.status`) :
+
+| `action` | Entrées | Sortie `ok:true` | Notes |
+|----------|---------|------------------|-------|
+| `prolonger` | `{ membreId, jours }` | `{ ok:true, expireLe }` | `prolongerMembre` : repousse `expireLe` ; repasse `expire`→`actif` si pertinent. `404` membre introuvable. |
+| `suspendre` | `{ membreId }` | `{ ok:true, statut:'suspendu', tokenVersion }` | `suspendreMembre` : statut → `suspendu` **et** `tokenVersion++` (coupe toutes les sessions ouvertes). Réversible. `404` introuvable. |
+| `reactiver` | `{ membreId }` | `{ ok:true, statut:'actif' }` | `reactiverMembre` : statut → `actif`. N'invente pas de date : si l'accès était échu, prolonger est requis en plus. `404` introuvable. |
+| `supprimer_membre` | `{ membreId }` | `{ ok:true }` | `supprimerMembre` : efface le membre **en cascade** (sous-collections `appareils`, `messages`, `resultats`, `evals`/notes) **et libère le verrou d'unicité email** `emails/{hash}` (D21). `404` introuvable. |
+
+**K8 — maintenance admin** (`api/_lib/maintenance.js`, câblé dans `admin.js` ; le `catch` honore `e.status`) :
+
+| `action` | Entrées | Sortie `ok:true` | Notes |
+|----------|---------|------------------|-------|
+| `list_journal` | `{ max? }` | `{ journal:[{id,qui,action,cible,type,le}] }` | Journal d'audit du plus récent au plus ancien. `max` borné 1–500 (défaut 100). Lecture seule. |
+| `stockage` | — | `{ stockage:{demandes,demandesRejetees,membres,essais,journal} }` | Rapport de stockage (page de maintenance occasionnelle). Comptage borné toléré hors tableau de bord (D22). Lecture seule. |
+| `purger` | `{ cible }` | `{ ok:true, cible, supprime }` | Purge **ciblée et explicite** ; `cible` ∈ liste blanche `{'journal','demandes_rejetees'}` (données **transitoires** uniquement). `400 'Cible de purge inconnue.'` sinon — aucune suppression. Jamais de purge implicite de membres/essais/messages/résultats. Chaque purge est journalisée (`action:'purge'`, la trace survit même à une purge du journal). |
 
 ---
 

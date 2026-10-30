@@ -22,8 +22,38 @@
         headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
         body: JSON.stringify(Object.assign({ action: action }, payload || {}))
       });
-    }).then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); });
+    }).then(function(r){ return r.json().then(function(j){ return { ok:r.ok, status:r.status, j:j }; },
+      function(){ return { ok:r.ok, status:r.status, j:{} }; }); });
   }
+
+  /* ---------- K1ter : bandeau d'erreur global (jamais d'erreur ignorée) ----------
+     Toute réponse non OK de /api/admin est affichée dans un bandeau visible.
+     401 -> « Session expirée, reconnectez-vous » ; 403 -> « Accès refusé » ;
+     5xx -> « Erreur serveur » ; échec réseau (.catch) -> « Réseau indisponible ». */
+  function elBandeau(){
+    var b = $('bandeau');
+    if (!b){
+      b = document.createElement('div'); b.id = 'bandeau'; b.className = 'bandeau';
+      b.setAttribute('role','alert'); b.setAttribute('aria-live','assertive'); b.hidden = true;
+      if (document.body) document.body.insertBefore(b, document.body.firstChild);
+    }
+    return b;
+  }
+  function bandeau(message){ var b = elBandeau(); b.textContent = message; b.hidden = false; }
+  function cacherBandeau(){ var b = $('bandeau'); if (b){ b.hidden = true; b.textContent = ''; } }
+  function messagePourStatut(status){
+    if (status === 401) return 'Session expirée, reconnectez-vous';
+    if (status === 403) return 'Accès refusé';
+    if (status >= 500) return 'Erreur serveur';
+    return 'Erreur serveur';
+  }
+  // Renvoie true si l'appel a réussi ; sinon affiche le bandeau et renvoie false.
+  function reponseOk(res){
+    if (res && res.ok && res.j && res.j.ok) return true;
+    bandeau(messagePourStatut(res ? res.status : 500));
+    return false;
+  }
+  function erreurReseau(){ bandeau('Réseau indisponible'); }
 
   /* ---------- Chips matières (chargées depuis le catalogue réel) ---------- */
   function rendreChips(){
@@ -43,9 +73,11 @@
   }
   function chargerMatieres(){
     return appel('list_matieres').then(function(res){
-      if (res.ok && res.j.ok) { MATIERES_DEF = res.j.matieres || []; }
+      if (!reponseOk(res)) { rendreChips(); return false; }
+      MATIERES_DEF = res.j.matieres || [];
       rendreChips();
-    }).catch(function(){ rendreChips(); });
+      return true;
+    }).catch(function(){ erreurReseau(); rendreChips(); return false; });
   }
   function matieresChoisies(){
     return Object.keys(selection).filter(function(k){ return selection[k]; });
@@ -53,13 +85,14 @@
 
   /* ---------- Tableau de bord ---------- */
   function chargerStats(){
-    appel('stats').then(function(res){
-      if (!res.ok || !res.j.ok) return;
+    return appel('stats').then(function(res){
+      if (!reponseOk(res)) return false;
       var s = res.j.stats;
       $('s-dem').textContent = s.demandes; $('s-dem-a').textContent = s.demandesEnAttente + ' en attente';
       $('s-mem').textContent = s.membres; $('s-mem-a').textContent = s.membresActifs + ' actifs';
       $('s-msg').textContent = s.messages; $('s-msg-a').textContent = s.messagesOuverts + ' ouverts';
-    });
+      return true;
+    }).catch(function(){ erreurReseau(); return false; });
   }
 
   /* ---------- Membres ---------- */
@@ -122,7 +155,11 @@
     });
   }
   function chargerMembres(){
-    appel('list_membres').then(function(res){ if (res.ok && res.j.ok) rendreMembres(res.j.membres); });
+    return appel('list_membres').then(function(res){
+      if (!reponseOk(res)) return false;
+      rendreMembres(res.j.membres);
+      return true;
+    }).catch(function(){ erreurReseau(); return false; });
   }
 
   /* ---------- Demandes ---------- */
@@ -163,7 +200,11 @@
     });
   }
   function chargerDemandes(){
-    appel('list_demandes').then(function(res){ if (res.ok && res.j.ok) rendreDemandes(res.j.demandes); });
+    return appel('list_demandes').then(function(res){
+      if (!reponseOk(res)) return false;
+      rendreDemandes(res.j.demandes);
+      return true;
+    }).catch(function(){ erreurReseau(); return false; });
   }
 
   /* ---------- Messages ---------- */
@@ -184,7 +225,11 @@
     });
   }
   function chargerMessages(){
-    appel('list_messages').then(function(res){ if (res.ok && res.j.ok) rendreMessages(res.j.fils); });
+    return appel('list_messages').then(function(res){
+      if (!reponseOk(res)) return false;
+      rendreMessages(res.j.fils);
+      return true;
+    }).catch(function(){ erreurReseau(); return false; });
   }
 
   function ouvrirReponse(f){
@@ -195,7 +240,26 @@
     (f.items || []).forEach(function(it){
       var b = document.createElement('div');
       b.className = 'bulle ' + (it.de === 'admin' ? 'moi' : 'lui');
-      b.innerHTML = esc(it.texte) + '<span class="meta">' + (it.de==='admin'?'Vous':'Membre') + ' • ' + dateFr(it.le) + '</span>';
+      var txt = document.createElement('span');
+      txt.textContent = it.texte || '';
+      b.appendChild(txt);
+      // K7 : afficher les ressources jointes (PDF/livres) comme liens cliquables.
+      // Liens posés via la propriété DOM .href (pas d'injection d'attribut) et
+      // restreints à https:// (défense en profondeur, miroir de validerPieces).
+      (it.pieces || []).forEach(function(p){
+        if (!p || !/^https:\/\//i.test(String(p.url || ''))) return;
+        var a = document.createElement('a');
+        a.className = 'pj';
+        a.href = p.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = '📎 ' + (p.nom || 'pièce');
+        b.appendChild(a);
+      });
+      var meta = document.createElement('span');
+      meta.className = 'meta';
+      meta.textContent = (it.de === 'admin' ? 'Vous' : 'Membre') + ' • ' + dateFr(it.le);
+      b.appendChild(meta);
       fil.appendChild(b);
     });
     fil.scrollTop = fil.scrollHeight;
@@ -203,10 +267,11 @@
   }
   function envoyerReponse(){
     var texte = $('rep-txt').value.trim();
-    if (!texte) { $('rep-err').textContent = 'Réponse vide.'; return; }
     var pieces = [];
     var pn = $('rep-pnom').value.trim(), pu = $('rep-purl').value.trim();
     if (pu) pieces.push({ nom: pn || 'pièce', url: pu });
+    // K7 : l'admin peut envoyer une ressource (PDF) SEULE, sans texte.
+    if (!texte && !pieces.length) { $('rep-err').textContent = 'Message ou ressource requis.'; return; }
     appel('repondre', { messageId: filCourant.id, texte: texte, pieces: pieces }).then(function(res){
       if (!res.ok || !res.j.ok) { $('rep-err').textContent = (res.j && res.j.erreur) || 'Envoi impossible.'; return; }
       $('ov-rep').classList.remove('on'); chargerMessages();
@@ -254,9 +319,9 @@
     var email = $('e-mail').value.trim();
     if (!email) { $('e-err').textContent = 'Email requis.'; return; }
     $('e-err').textContent = ''; $('e-lien').hidden = true;
-    appel('inviter_essai', { email: email }).then(function(res){
+    appel('accorder_essai', { email: email }).then(function(res){
       if (!res.ok || !res.j.ok) { $('e-err').textContent = (res.j && res.j.erreur) || 'Envoi impossible.'; return; }
-      $('e-err').textContent = 'Invitation envoyée ✔';
+      $('e-err').textContent = 'Essai accordé ✔ (lien envoyé par email)';
       if (res.j.lien) { $('e-lien-url').value = res.j.lien; $('e-lien').hidden = false; }
       $('e-mail').value = '';
     }).catch(function(){ $('e-err').textContent = 'Réseau indisponible.'; });
@@ -295,14 +360,85 @@
       .catch(function(){ $('a-err').textContent = 'Identifiants incorrects.'; });
   }
 
+  /* ---------- K1ter : console + vérification d'email ----------
+     demarrerConsole(user)  : affiche la console et lance les chargements.
+     afficherVerif(user)    : affiche/masque le bandeau « email non vérifié » et
+                              câble l'envoi de l'email et la re-vérification. */
+  function demarrerConsole(user){
+    $('bloc-login').hidden = true; $('bloc-admin').hidden = false;
+    $('deco').hidden = false; $('qui').textContent = user.email || '';
+    // chargerMatieres doit précéder chargerMembres (noms de matières) et traiterHash.
+    chargerMatieres().then(function(okMat){
+      traiterHash();
+      return Promise.all([ okMat, chargerMembres(), chargerStats(), chargerDemandes(), chargerMessages() ]);
+    }).then(function(resultats){
+      // K1quater (1) : si TOUTE la série de chargements réussit, on efface le
+      // bandeau d'erreur éventuellement laissé par un échec précédent.
+      if (resultats.every(Boolean)) cacherBandeau();
+    });
+  }
+
+  // K1quater (1) : « Tout rafraîchir » — on masque d'abord le bandeau, puis on le
+  // réaffiche seulement si un appel échoue ; s'ils réussissent tous, il reste caché.
+  function rafraichirTout(){
+    cacherBandeau();
+    Promise.all([ chargerStats(), chargerDemandes(), chargerMessages(), chargerMembres() ])
+      .then(function(resultats){ if (resultats.every(Boolean)) cacherBandeau(); });
+  }
+
+  function afficherVerif(user){
+    var b = $('bandeau-verif');
+    if (!b) return;
+    if (!user || user.emailVerified) { b.hidden = true; return; }
+    b.hidden = false;
+    var msg = $('verif-msg'); if (msg) msg.textContent = '';
+
+    var bEnvoyer = $('verif-envoyer');
+    if (bEnvoyer && !bEnvoyer._cable){
+      bEnvoyer._cable = true;
+      bEnvoyer.addEventListener('click', function(){
+        var u = auth.currentUser; if (!u) return;
+        bEnvoyer.disabled = true; if (msg) msg.textContent = 'Envoi…';
+        u.sendEmailVerification().then(function(){
+          if (msg) msg.textContent = 'Email de vérification envoyé. Vérifiez votre boîte de réception.';
+        }).catch(function(){
+          if (msg) msg.textContent = 'Envoi impossible pour le moment.';
+        }).then(function(){ bEnvoyer.disabled = false; });
+      });
+    }
+
+    var bRecheck = $('verif-recheck');
+    if (bRecheck && !bRecheck._cable){
+      bRecheck._cable = true;
+      bRecheck.addEventListener('click', function(){
+        var u = auth.currentUser; if (!u) return;
+        bRecheck.disabled = true; if (msg) msg.textContent = 'Vérification…';
+        u.reload().then(function(){ return u.getIdToken(true); }).then(function(){
+          var cur = auth.currentUser;
+          if (cur && cur.emailVerified) {
+            // K1quater (2) : email désormais vérifié → on masque les deux bandeaux
+            // et on relance la console pour recharger stats/demandes/messages/
+            // membres/matières avec un jeton frais.
+            afficherVerif(cur);
+            cacherBandeau();
+            demarrerConsole(cur);
+          }
+          else if (msg) { msg.textContent = 'Toujours non vérifié. Cliquez sur le lien reçu par email.'; }
+        }).catch(function(){
+          if (msg) msg.textContent = 'Vérification impossible pour le moment.';
+        }).then(function(){ bRecheck.disabled = false; });
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function(){
     rendreChips();
     $('f-login').addEventListener('submit', connexion);
     $('deco').addEventListener('click', function(){ auth.signOut(); });
-    $('rafr-dem').addEventListener('click', chargerDemandes);
-    $('rafr-msg').addEventListener('click', chargerMessages);
-    $('rafr-mem').addEventListener('click', chargerMembres);
-    $('rafr-tout').addEventListener('click', function(){ chargerStats(); chargerDemandes(); chargerMessages(); chargerMembres(); });
+    $('rafr-dem').addEventListener('click', function(){ cacherBandeau(); chargerDemandes(); });
+    $('rafr-msg').addEventListener('click', function(){ cacherBandeau(); chargerMessages(); });
+    $('rafr-mem').addEventListener('click', function(){ cacherBandeau(); chargerMembres(); });
+    $('rafr-tout').addEventListener('click', function(){ rafraichirTout(); });
     $('g-ok').addEventListener('click', accorder);
     window.addEventListener('hashchange', function(){ if (!$('bloc-admin').hidden) traiterHash(); });
     $('e-ok').addEventListener('click', inviterEssai);
@@ -312,13 +448,13 @@
 
     auth.onAuthStateChanged(function(user){
       if (user) {
-        $('bloc-login').hidden = true; $('bloc-admin').hidden = false;
-        $('deco').hidden = false; $('qui').textContent = user.email || '';
-        chargerMatieres().then(function(){ chargerMembres(); traiterHash(); });
-        chargerStats(); chargerDemandes(); chargerMessages();
+        demarrerConsole(user);
+        afficherVerif(user);
       } else {
         $('bloc-login').hidden = false; $('bloc-admin').hidden = true;
         $('deco').hidden = true; $('qui').textContent = '';
+        var bv = $('bandeau-verif'); if (bv) bv.hidden = true;
+        cacherBandeau();
       }
     });
   });
