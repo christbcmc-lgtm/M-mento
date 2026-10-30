@@ -42,6 +42,7 @@ textarea{min-height:92px;resize:vertical}
 .btn{border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:var(--sur-accent);font:700 16px system-ui;cursor:pointer;transition:transform .15s,filter .15s;width:100%;margin-top:18px}
 .btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
 .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn.mini{width:auto;margin:0;padding:8px 14px;font-size:14px}
 
 /* Messages */
 .note{border-radius:12px;padding:12px 14px;background:var(--masque);color:var(--masque-texte);font-size:14px;margin-top:14px}
@@ -155,7 +156,7 @@ table.tbl th,table.tbl td{border:1px solid var(--bordure);padding:8px 10px;text-
 table.tbl thead th{background:var(--masque);color:var(--masque-texte)}
 
 /* ===== Navigateur d'étapes intelligent et discret ===== */
-.nav-etapes{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--bordure);box-shadow:0 10px 30px -12px rgba(0,0,0,.45);backdrop-filter:blur(8px);transition:opacity .4s,transform .4s}
+.nav-etapes{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--bordure);box-shadow:0 10px 30px -12px var(--ombre);backdrop-filter:blur(8px);transition:opacity .4s,transform .4s}
 .nav-etapes.dort{opacity:.22}
 .nav-etapes.dort:hover{opacity:1}
 .nav-etapes.cache{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(16px)}
@@ -168,3 +169,13 @@ table.tbl thead th{background:var(--masque);color:var(--masque-texte)}
 @media (max-width:520px){.nav-etapes{bottom:12px}.ne-lab{min-width:78px;font-size:12px}}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+
+/* Page de décision (admin via jeton email) */
+.infos{margin:0}
+.infos>div{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--bordure)}
+.infos>div:last-child{border-bottom:0}
+.infos dt{margin:0;min-width:84px;color:var(--texte-doux);font-size:14px}
+.infos dd{margin:0;flex:1;word-break:break-word}
+.mat-liste{display:flex;flex-direction:column;gap:8px;margin:6px 0 4px}
+.case{display:flex;align-items:center;gap:8px;font-weight:500}
+.case input{width:auto;margin:0}

@@ -11,14 +11,24 @@
 <link rel="stylesheet" href="assets/themes.css">
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/espace.css">
+<style>
+  /* K1ter : bandeaux globaux. Couleurs via variables de thème (fallbacks à
+     revoir au passage K17 : 0 couleur en dur). */
+  .bandeau{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;
+    padding:10px 16px;text-align:center;font-weight:600;
+    background:var(--danger);color:var(--sur-danger);}
+  .bandeau[hidden]{display:none;}
+  .bandeau-verif{background:var(--avert);color:var(--sur-avert);}
+  .bandeau .sous{font-weight:400;opacity:.9;}
+</style>
 <script src="assets/js/theme-boot.js"></script>
 </head>
 <body>
 <header class="app">
   <div class="brand">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
-      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
-      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <rect width="64" height="64" rx="16" fill="var(--accent)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
     </svg>
     <span>Mémento — Admin</span>
   </div>
@@ -33,11 +43,21 @@
   </select>
 </header>
 
+<!-- K1ter : bandeau d'erreur global (toute erreur d'appel /api/admin y est affichée, jamais ignorée) -->
+<div id="bandeau" class="bandeau" role="alert" aria-live="assertive" hidden></div>
+
+<!-- K1ter : bandeau « email non vérifié » -->
+<div id="bandeau-verif" class="bandeau bandeau-verif" role="alert" hidden>
+  <span>Votre email n'est pas vérifié.</span>
+  <button id="verif-envoyer" type="button" class="btn mini">Envoyer l'email de vérification</button>
+  <button id="verif-recheck" type="button" class="btn mini ghost">J'ai vérifié mon email</button>
+  <span id="verif-msg" class="sous" role="status" aria-live="polite"></span>
+</div>
+
 <!-- Connexion admin -->
 <div class="wrap" id="bloc-login">
   <section class="panel">
     <h2 style="margin-top:0">Connexion administrateur</h2>
-    <p class="aide">Réservé au compte administrateur (authentification Firebase).</p>
     <form id="f-login" novalidate>
       <label for="a-mail">Email</label>
       <input id="a-mail" type="email" autocomplete="email" placeholder="admin@exemple.com">
@@ -94,6 +114,35 @@
     <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:600">
       <input type="checkbox" id="g-code" style="width:auto" checked> Générer automatiquement un code par matière
     </label>
+    <div class="row" style="margin-top:14px">
+      <div>
+        <label for="g-duree">Durée d'accès</label>
+        <select id="g-duree">
+          <option value="7">7 jours</option>
+          <option value="30" selected>30 jours</option>
+          <option value="90">90 jours</option>
+          <option value="180">180 jours</option>
+          <option value="perso">Personnalisée…</option>
+        </select>
+      </div>
+      <div>
+        <label for="g-duree-perso">Durée personnalisée (jours)</label>
+        <input id="g-duree-perso" type="number" min="1" step="1" placeholder="ex. 45">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="g-appareils">Appareils autorisés</label>
+        <select id="g-appareils">
+          <option value="1" selected>1 appareil</option>
+          <option value="2">2 appareils</option>
+        </select>
+      </div>
+      <div>
+        <label for="g-quota">Quota d'heures (0 = illimité)</label>
+        <input id="g-quota" type="number" min="0" step="1" value="0">
+      </div>
+    </div>
     <input type="hidden" id="g-demande">
     <div class="err" id="g-err"></div>
     <button class="btn" id="g-ok">Accorder l'accès et envoyer la clé</button>

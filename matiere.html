@@ -19,8 +19,8 @@
 <header class="app">
   <div class="brand">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
-      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
-      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <rect width="64" height="64" rx="16" fill="var(--accent)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
     </svg>
     <span>Mémento</span>
   </div>
@@ -41,6 +41,15 @@
     <p class="aide">Votre accès à cette matière est bien actif.</p>
   </section>
   <div id="cours-mount" class="cours"></div>
+
+  <section class="panel" id="bloc-eval" hidden>
+    <div class="eval-tete">
+      <h2 style="margin:0">Évaluations</h2>
+      <button class="btn mini ghost" id="voir-resultats" type="button">Mes résultats</button>
+    </div>
+    <p class="aide">Quiz notés sur 20. La correction s'affiche une fois la copie rendue.</p>
+    <div id="eval-mount"></div>
+  </section>
 </main>
 
 <div class="wrap" id="bloc-erreur" hidden>
@@ -55,7 +64,7 @@
 
 <script src="assets/app-theme.js"></script>
 <script src="assets/cours-reader.js"></script>
-<script src="assets/cours-thermo.js"></script>
 <script src="assets/matiere.js"></script>
+<script src="assets/evaluation.js"></script>
 </body>
 </html>

@@ -17,8 +17,8 @@
 <header class="app">
   <div class="brand">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
-      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
-      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <rect width="64" height="64" rx="16" fill="var(--accent)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
     </svg>
     <span>Mémento — Essai</span>
   </div>
@@ -38,31 +38,13 @@
 </div>
 
 <main class="wrap large" id="essai" hidden>
-  <div class="bandeau">Temps global restant : <span class="minuterie" id="glob">–</span> — aperçu en lecture seule, sans téléchargement.</div>
+  <div class="bandeau">Temps d'essai restant : <span class="minuterie" id="glob">–</span> — aperçu en lecture seule, sans téléchargement.</div>
 
-  <section class="panel zone-essai" data-zone="cours">
+  <section class="panel zone-essai" data-zone="extrait" id="zone-extrait" style="position:relative">
     <div class="voile"><div>⏱️ Aperçu terminé</div><div class="aide">Demandez un accès pour lire l'intégralité.</div></div>
-    <h2 style="margin-top:0">Cours <span class="minuterie" data-timer="cours" style="font-size:14px"></span></h2>
-    <p>Les cours Mémento sont présentés en deux couches : une synthèse claire, puis le détail déplié à la demande, avec formules (rendu mathématique) et schémas.</p>
-    <p class="aide">Exemple : définition, propriétés, démonstration guidée, exemple résolu.</p>
-  </section>
-
-  <section class="panel zone-essai" data-zone="evaluation">
-    <div class="voile"><div>⏱️ Aperçu terminé</div><div class="aide">Demandez un accès pour vous auto-évaluer.</div></div>
-    <h2 style="margin-top:0">Évaluation <span class="minuterie" data-timer="evaluation" style="font-size:14px"></span></h2>
-    <p>Des questions courtes pour vérifier votre compréhension, avec correction masquée jusqu'à votre réponse.</p>
-  </section>
-
-  <section class="panel zone-essai" data-zone="revision">
-    <div class="voile"><div>⏱️ Aperçu terminé</div><div class="aide">Demandez un accès pour réviser sans limite.</div></div>
-    <h2 style="margin-top:0">Révision <span class="minuterie" data-timer="revision" style="font-size:14px"></span></h2>
-    <p>Fiches de révision condensées : l'essentiel à retenir, points clés et pièges fréquents.</p>
-  </section>
-
-  <section class="panel zone-essai" data-zone="exercices">
-    <div class="voile"><div>⏱️ Aperçu terminé</div><div class="aide">Demandez un accès pour tous les exercices corrigés.</div></div>
-    <h2 style="margin-top:0">Exercices <span class="minuterie" data-timer="exercices" style="font-size:14px"></span></h2>
-    <p>Exercices progressifs avec corrections détaillées, réponses longues repliées par défaut.</p>
+    <h2 style="margin-top:0" id="ex-titre">Aperçu</h2>
+    <div id="ex-corps"></div>
+    <div class="filigrane" id="ex-filigrane" aria-hidden="true"></div>
   </section>
 
   <section class="panel" style="text-align:center">

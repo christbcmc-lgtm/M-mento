@@ -17,14 +17,16 @@
 <header class="app">
   <div class="brand">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
-      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
-      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
-      <path d="M44 6h8v14l-4-3-4 3z" fill="var(--sur-accent,#fff)" opacity=".85"></path>
+      <rect width="64" height="64" rx="16" fill="var(--accent)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M44 6h8v14l-4-3-4 3z" fill="var(--sur-accent)" opacity=".85"></path>
     </svg>
     <span>Mémento</span>
   </div>
   <span class="spacer"></span>
   <span class="bonjour" id="bonjour"></span>
+  <button class="btn mini ghost" id="btn-verrou" type="button" hidden>Déverrouiller</button>
+  <button class="btn mini ghost" id="btn-deco" type="button">Se déconnecter</button>
   <select class="theme" aria-label="Thème">
     <option value="clair">Clair</option><option value="sepia">Sépia</option>
     <option value="gris">Gris</option><option value="sombre">Sombre</option>
@@ -61,22 +63,24 @@
   </section>
 </div>
 
-<!-- Modale : code de matière -->
+<!-- Modale : déverrouillage de l'appareil (code à usage renforcé, valable 12 h) -->
 <div class="overlay" id="ov-code">
   <div class="boite" style="text-align:left">
-    <h2 style="margin:0 0 6px" id="code-titre">Code de la matière</h2>
-    <p class="aide" style="margin:0 0 10px">Saisissez le code reçu par email pour ouvrir cette matière.</p>
+    <h2 style="margin:0 0 6px">Déverrouiller cet appareil</h2>
+    <p class="aide" style="margin:0 0 10px">Saisissez votre code personnel pour déverrouiller cet appareil pendant 12 heures.</p>
     <label for="code-val">Code</label>
-    <input id="code-val" placeholder="ABCDEF" style="letter-spacing:.14em;text-transform:uppercase">
+    <input id="code-val" placeholder="Votre code" autocomplete="one-time-code" style="letter-spacing:.14em;text-transform:uppercase">
     <div class="err" id="code-err"></div>
     <button class="btn" id="code-ok">Valider</button>
-    <button class="btn ghost" id="code-reset" style="margin-top:10px">Code oublié ? Réinitialiser</button>
-    <div id="reset-zone" hidden>
-      <label for="reset-num">Votre numéro (preuve d'identité)</label>
-      <input id="reset-num" placeholder="Numéro communiqué lors de l'inscription">
-      <div class="err" id="reset-err"></div>
-      <button class="btn" id="reset-ok">Recevoir un nouveau code</button>
+    <div id="reset-zone" hidden style="margin-top:12px;border-top:1px solid var(--bordure);padding-top:10px">
+      <p class="aide" style="margin:0 0 8px">Pour recevoir un nouveau code, indiquez l'email et le numéro de votre compte. Le code sera envoyé à l'adresse enregistrée.</p>
+      <label for="code-email">Email du compte</label>
+      <input id="code-email" type="email" placeholder="vous@exemple.com" autocomplete="email">
+      <label for="code-numero" style="margin-top:8px;display:block">Votre numéro</label>
+      <input id="code-numero" placeholder="Numéro communiqué à l'inscription" autocomplete="off">
+      <button class="btn" id="code-reset-ok" style="margin-top:10px">Envoyer</button>
     </div>
+    <button class="btn ghost" id="code-reset" style="margin-top:10px">Code oublié ?</button>
     <button class="btn ghost" id="code-fermer" style="margin-top:10px">Fermer</button>
   </div>
 </div>

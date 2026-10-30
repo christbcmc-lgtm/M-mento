@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mémento — Décision d'accès</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/themes.css">
+<link rel="stylesheet" href="assets/base.css">
+<script src="assets/js/theme-boot.js"></script>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
+      <rect width="64" height="64" rx="16" fill="var(--accent)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M44 6h8v14l-4-3-4 3z" fill="var(--sur-accent)" opacity=".85"></path>
+    </svg>
+    <span>Mémento — Décision</span>
+  </div>
+  <span class="spacer"></span>
+  <select class="theme" aria-label="Thème">
+    <option value="clair">Clair</option><option value="sepia">Sépia</option>
+    <option value="gris">Gris</option><option value="sombre">Sombre</option>
+    <option value="noir">Noir</option><option value="bleu-nuit">Bleu nuit</option>
+    <option value="vert-foret">Vert forêt</option><option value="violet">Violet</option>
+  </select>
+</header>
+
+<div class="wrap" id="charge">
+  <section class="panel"><p class="aide">Chargement de la demande…</p></section>
+</div>
+
+<main class="wrap" id="bloc" hidden>
+  <section class="panel">
+    <h2 style="margin-top:0">Demande d'accès</h2>
+    <dl class="infos">
+      <div><dt>Nom</dt><dd id="d-nom"></dd></div>
+      <div><dt>Email</dt><dd id="d-email"></dd></div>
+      <div><dt>Type</dt><dd id="d-type"></dd></div>
+      <div><dt>Message</dt><dd id="d-msg"></dd></div>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin-top:0">Accepter</h2>
+    <p class="aide">Pour des raisons de sécurité, l'approbation ne se fait plus depuis ce lien : elle se termine dans la <b>console administrateur</b> (connexion Firebase). Cliquez ci-dessous pour y finaliser l'accès (choix des matières, durée, appareils).</p>
+    <div class="err" id="ok-err"></div>
+    <button class="btn" id="b-valider" type="button">Accepter — ouvrir la console admin</button>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin-top:0">Refuser</h2>
+    <form id="f-no" novalidate>
+      <label for="r-motif">Motif <span style="font-weight:400;color:var(--texte-doux)">(facultatif, communiqué au demandeur)</span></label>
+      <textarea id="r-motif" placeholder="Raison du refus…"></textarea>
+      <div class="err" id="no-err"></div>
+      <button class="btn ghost" type="submit">Refuser la demande</button>
+    </form>
+  </section>
+</main>
+
+<div class="wrap" id="bloc-erreur" hidden>
+  <section class="panel">
+    <h2 style="margin-top:0">Lien non valide</h2>
+    <p id="txt-erreur">Ce lien de décision est invalide, expiré ou déjà traité.</p>
+  </section>
+</div>
+
+<div class="overlay" id="ov">
+  <div class="boite">
+    <svg class="ok" viewBox="0 0 90 90"><circle cx="45" cy="45" r="38"></circle><path d="M28 46l12 12 23-26"></path></svg>
+    <h2 id="ov-titre">Demande traitée</h2>
+    <p id="ov-txt" style="color:var(--texte-doux);font-size:14px"></p>
+  </div>
+</div>
+
+<footer class="app">Mémento — décision réservée à l'administrateur.</footer>
+
+<script src="assets/app-theme.js"></script>
+<script src="assets/decision.js"></script>
+</body>
+</html>

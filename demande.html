@@ -16,9 +16,9 @@
 <header class="app">
   <div class="brand">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mémento">
-      <rect width="64" height="64" rx="16" fill="var(--accent,#2b5fd9)"></rect>
-      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent,#fff)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
-      <path d="M44 6h8v14l-4-3-4 3z" fill="var(--sur-accent,#fff)" opacity=".85"></path>
+      <rect width="64" height="64" rx="16" fill="var(--accent)"></rect>
+      <path d="M17 46V19l15 17 15-17v27" fill="none" stroke="var(--sur-accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M44 6h8v14l-4-3-4 3z" fill="var(--sur-accent)" opacity=".85"></path>
     </svg>
     <span>Mémento</span>
   </div>
@@ -40,14 +40,25 @@
 <div class="wrap">
   <section class="panel">
     <form id="f-dem" novalidate>
+      <div aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden">
+        <label for="d-site">Ne pas remplir</label>
+        <input id="d-site" name="site_web" type="text" tabindex="-1" autocomplete="off">
+      </div>
       <label for="d-nom">Nom</label>
       <input id="d-nom" name="nom" autocomplete="family-name" placeholder="Votre nom">
       <label for="d-prenom">Prénom</label>
       <input id="d-prenom" name="prenom" autocomplete="given-name" placeholder="Votre prénom">
       <label for="d-mail">Email</label>
       <input id="d-mail" name="email" type="email" autocomplete="email" placeholder="vous@exemple.com">
-      <label for="d-mat">Matière(s) souhaitée(s) <span style="font-weight:400;color:var(--texte-doux)">(facultatif)</span></label>
-      <input id="d-mat" name="matieres" placeholder="Ex. Thermodynamique, Probabilités…">
+      <label for="d-num">Numéro de téléphone</label>
+      <input id="d-num" name="numero" type="tel" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78">
+      <label>Type d'accès</label>
+      <div class="mat-liste" role="radiogroup" aria-label="Type d'accès">
+        <label class="case"><input type="radio" name="type" value="abonnement" checked> Abonnement</label>
+        <label class="case"><input type="radio" name="type" value="essai"> Essai gratuit</label>
+      </div>
+      <label>Matière(s) souhaitée(s)</label>
+      <div id="d-mat" class="mat-liste"><span class="aide">Chargement des matières…</span></div>
       <label for="d-msg">Message <span style="font-weight:400;color:var(--texte-doux)">(facultatif)</span></label>
       <textarea id="d-msg" name="message" placeholder="Précisez votre besoin si besoin…"></textarea>
       <div class="err" id="d-err"></div>
