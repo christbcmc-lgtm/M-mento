@@ -185,17 +185,18 @@ test('K1ter-i : « J’ai vérifié » recharge le jeton (reload + getIdToken(tr
   env.ctrl.status = 200;
   const u = env.user(false);
   let reloads = 0;
-  let forceVu = false;
+  let forceRefresh = null;
   u.reload = function () {
     reloads++;
     // Simule la validation côté Firebase après clic sur le lien reçu par email.
     u.emailVerified = true;
     return Promise.resolve();
   };
-  // Note : après vérification, la console est rechargée (K1quater) et réémet des
-  // getIdToken() sans argument ; on mémorise donc qu'un rafraîchissement forcé
-  // (force === true) a bien eu lieu au moment du « J'ai vérifié ».
-  u.getIdToken = function (force) { if (force === true) forceVu = true; return Promise.resolve('tok'); };
+  // K20 (X2) : après vérification, la console est RECHARGÉE (demarrerConsole),
+  // ce qui déclenche d'autres appels getIdToken() SANS argument. On retient donc
+  // qu'un rafraîchissement forcé a bien eu lieu, sans se faire écraser par les
+  // appels suivants (capture « au moins une fois avec force === true »).
+  u.getIdToken = function (force) { if (force === true) forceRefresh = true; return Promise.resolve('tok'); };
   env.connecter(u);
   await tick();
   assert.strictEqual(env.$('bandeau-verif').hidden, false);
@@ -203,7 +204,7 @@ test('K1ter-i : « J’ai vérifié » recharge le jeton (reload + getIdToken(tr
   env.$('verif-recheck').dispatchEvent(new env.win.Event('click'));
   await tick();
   assert.strictEqual(reloads, 1);
-  assert.strictEqual(forceVu, true);
+  assert.strictEqual(forceRefresh, true);
   // Une fois vérifié, le bandeau disparaît.
   assert.strictEqual(env.$('bandeau-verif').hidden, true);
 });

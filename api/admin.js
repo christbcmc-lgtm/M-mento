@@ -8,6 +8,7 @@ const essaisLib = require('./_lib/essais');
 const inscLib = require('./_lib/inscription');
 const msgLib = require('./_lib/messagerie');
 const maintLib = require('./_lib/maintenance');
+const { catalogueListe } = require('./_lib/contenu');
 
 // K1 (D12) : garde admin PURE et testable. L'accès admin exige un jeton dont
 // l'email est VÉRIFIÉ (email_verified === true) ET égal à ADMIN_EMAIL.
@@ -41,8 +42,11 @@ module.exports = async (req, res) => {
     const now = new Date();
 
     if (action === 'list_matieres') {
-      const s = await base.collection('matieres').orderBy('ordre').get();
-      return send(res, 200, { ok: true, matieres: s.docs.map((d) => ({ id: d.id, nom: (d.data().nom || d.id), ordre: d.data().ordre || 0 })) });
+      // K19 (X1) : le catalogue des matières vient de contenu/catalogue.json
+      // (liste blanche réelle : thermo, proba, info), PAS de la collection
+      // Firestore `matieres` (vide → l'admre ne pouvait rien choisir). La liste
+      // n'est donc jamais vide. `bientot:true` = visible mais non cochable.
+      return send(res, 200, { ok: true, matieres: catalogueListe() });
     }
 
     if (action === 'stats') {

@@ -18,6 +18,22 @@ function catalogue() {
   } catch (e) { return {}; }
 }
 
+// K19 (X1) : liste ORDONNÉE du catalogue pour l'admin, lue depuis
+// contenu/catalogue.json (jamais Firestore). Ne dépend d'aucune base :
+// la liste n'est donc jamais vide quand la collection Firestore l'est.
+// Renvoie [{ id, nom, ordre, bientot }] triée par `ordre`.
+function catalogueListe() {
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(contenuDir(), 'catalogue.json'), 'utf8'));
+    return (j.matieres || []).map((m, i) => ({
+      id: m.id,
+      nom: m.titre || m.id,
+      ordre: (typeof m.ordre === 'number') ? m.ordre : (i + 1),
+      bientot: m.bientot === true
+    })).sort((a, b) => a.ordre - b.ordre);
+  } catch (e) { return []; }
+}
+
 // Lecture d'un cours depuis le disque (jamais exposé au public).
 function lireCours(matiere) {
   const id = String(matiere || '').replace(/[^a-z0-9_-]/gi, ''); // anti path-traversal
@@ -54,4 +70,4 @@ async function servirCours(db, req, matiere) {
   return { matiere: { id, titre: cat[id] }, cours };
 }
 
-module.exports = { catalogue, lireCours, profilMatieres, servirCours, erreur };
+module.exports = { catalogue, catalogueListe, lireCours, profilMatieres, servirCours, erreur };
